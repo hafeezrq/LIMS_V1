@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.LabDashboardController">
+    
+    <!-- Top Menu Bar -->
+    <top>
+        <VBox>
+            <!-- Compact Header -->
+            <HBox style="-fx-background-color: #9b59b6; -fx-padding: 8 15;" spacing="10" alignment="CENTER_LEFT">
+                <Label text="Lab Dashboard" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userLabel" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12;"/>
+                <Button text="Logout" onAction="#handleLogout"
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-size: 11; -fx-padding: 5 12; -fx-background-radius: 4; -fx-cursor: hand;"/>
+            </HBox>
+            
+            <!-- Menu Bar -->
+            <MenuBar>
+                <Menu text="Patients">
+                    <MenuItem text="Search Patient" onAction="#handleSearchPatient"/>
+                </Menu>
+                
+                <Menu text="Lab Orders">
+                    <MenuItem text="View Orders" onAction="#handleViewOrders"/>
+                </Menu>
+                
+                <Menu text="Lab Worklist">
+                    <MenuItem text="Pending Tests" onAction="#handleWorklist"/>
+                    <MenuItem text="Enter Results" onAction="#handleEnterResults"/>
+                    <MenuItem text="Completed Tests" onAction="#handleCompletedTests"/>
+                </Menu>
+            </MenuBar>
+        </VBox>
+    </top>
+    
+    <!-- Center Content -->
+    <center>
+        <VBox alignment="CENTER" spacing="30" style="-fx-background-color: #fef5e7;">
+            <padding>
+                <Insets top="50" right="50" bottom="50" left="50"/>
+            </padding>
+            
+            <!-- Welcome Message -->
+            <VBox alignment="CENTER" spacing="15">
+                <Label text="Lab Dashboard" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #9b59b6;"/>
+                <Label fx:id="welcomeLabel" style="-fx-font-size: 18; -fx-text-fill: #7f8c8d;"/>
+                <Label fx:id="roleLabel" style="-fx-font-size: 14; -fx-text-fill: #9b59b6; -fx-font-weight: bold;"/>
+            </VBox>
+            
+            <!-- Quick Actions -->
+            <VBox spacing="20" alignment="CENTER">
+                <Label text="Lab Operations" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                
+                <!-- Primary Lab Actions -->
+                <HBox spacing="25" alignment="CENTER">
+                    <VBox alignment="CENTER" spacing="10" 
+                          style="-fx-background-color: #e67e22; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2);">
+                        <Label text="Pending Tests" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                        <Label fx:id="pendingCountLabel" text="0" style="-fx-font-size: 36; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                        <Button text="View Worklist" onAction="#handleWorklist" 
+                                style="-fx-background-color: white; -fx-text-fill: #e67e22; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                                prefWidth="180"/>
+                    </VBox>
+                    
+                    <VBox alignment="CENTER" spacing="10" 
+                          style="-fx-background-color: #27ae60; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2);">
+                        <Label text="Completed Today" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                        <Label fx:id="completedCountLabel" text="0" style="-fx-font-size: 36; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                        <Button text="View Completed" onAction="#handleCompletedTests" 
+                                style="-fx-background-color: white; -fx-text-fill: #27ae60; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                                prefWidth="180"/>
+                    </VBox>
+                </HBox>
+                
+                <!-- Secondary Actions -->
+                <HBox spacing="20" alignment="CENTER">
+                    <Button text="Search Patient" onAction="#handleSearchPatient" 
+                            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 15 25; -fx-background-radius: 8;"
+                            prefWidth="180"/>
+                    
+                    <Button text="View Orders" onAction="#handleViewOrders" 
+                            style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 15 25; -fx-background-radius: 8;"
+                            prefWidth="180"/>
+                    
+                    <Button text="Enter Results" onAction="#handleEnterResults" 
+                            style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 15 25; -fx-background-radius: 8;"
+                            prefWidth="180"/>
+                </HBox>
+            </VBox>
+            
+            <!-- Status Info -->
+            <VBox alignment="CENTER" spacing="10" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                <Label text="System Status: Connected to Database" style="-fx-text-fill: #27ae60; -fx-font-size: 12; -fx-font-weight: bold;"/>
+                <Label text="Role: Lab Technician" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11;"/>
+            </VBox>
+        </VBox>
+    </center>
+    
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox style="-fx-background-color: #8e44ad; -fx-padding: 10;" spacing="20" alignment="CENTER_LEFT">
+            <Label text="QDC Laboratory - Lab Interface" style="-fx-text-fill: white; -fx-font-size: 11;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Version 1.0.0" style="-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 10;"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.qdc.lims.desktop.controller.TestRecipeController"
+      spacing="15" prefWidth="700" prefHeight="500" style="-fx-padding: 20;">
+    
+    <Label text="Test Recipe / Consumption" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Label fx:id="testNameLabel" text="Test: Hemoglobin" style="-fx-font-size: 14; -fx-text-fill: #7f8c8d;"/>
+    <Separator/>
+    
+    <HBox spacing="15" VBox.vgrow="ALWAYS">
+        <!-- List of Recipe Items -->
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Consumption Item List" style="-fx-font-weight: bold;"/>
+            <TableView fx:id="recipeTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="itemNameColumn" text="Inventory Item" prefWidth="250"/>
+                    <TableColumn fx:id="quantityColumn" text="Qty Consumed" prefWidth="100"/>
+                    <TableColumn fx:id="unitColumn" text="Unit" prefWidth="80"/>
+                </columns>
+            </TableView>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                 <Button text="Remove Item" onAction="#handleRemove" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+        
+        <!-- Add Form -->
+        <VBox spacing="15" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;" prefWidth="280">
+            <Label text="Add To Recipe" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+            
+            <VBox spacing="5">
+                <Label text="Inventory Item:"/>
+                <ComboBox fx:id="inventoryItemComboBox" promptText="Select Item" maxWidth="Infinity"/>
+            </VBox>
+            
+            <VBox spacing="5">
+                <Label text="Quantity Consumed:"/>
+                <TextField fx:id="quantityField" promptText="e.g. 1.0"/>
+            </VBox>
+            
+            <Region VBox.vgrow="ALWAYS"/>
+            
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Add" onAction="#handleAdd" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" prefWidth="100"/>
+            </HBox>
+        </VBox>
+    </HBox>
+    
+    <Separator/>
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Close" onAction="#handleClose" style="-fx-background-color: #95a5a6; -fx-text-fill: white;" prefWidth="100"/>
+    </HBox>
+</VBox>

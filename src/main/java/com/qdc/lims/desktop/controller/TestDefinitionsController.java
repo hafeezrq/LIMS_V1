@@ -1,0 +1,197 @@
+package com.qdc.lims.desktop.controller;
+
+import com.qdc.lims.entity.TestDefinition;
+import com.qdc.lims.service.TestDefinitionService;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+@Component
+public class TestDefinitionsController {
+
+    @FXML
+    private TextField searchField;
+    @FXML
+    private TableView<TestDefinition> testTable;
+    @FXML
+    private TableColumn<TestDefinition, String> colTestName;
+    @FXML
+    private TableColumn<TestDefinition, String> colShortCode;
+    @FXML
+    private TableColumn<TestDefinition, String> colDepartment;
+    @FXML
+    private TableColumn<TestDefinition, Double> colPrice;
+    @FXML
+    private TableColumn<TestDefinition, Void> colActions;
+    @FXML
+    private Label statusLabel;
+
+    @Autowired
+    private TestDefinitionService testDefinitionService;
+
+    @FXML
+    public void initialize() {
+        if (testDefinitionService == null) {
+            statusLabel.setText("Error: Service not injected");
+            return;
+        }
+        setupActionsColumn();
+        loadTests();
+    }
+
+    private void loadTests() {
+        try {
+            ObservableList<TestDefinition> tests = FXCollections.observableArrayList(testDefinitionService.findAll());
+            testTable.setItems(tests);
+            statusLabel.setText("Loaded " + tests.size() + " tests.");
+        } catch (Exception e) {
+            statusLabel.setText("Error loading tests: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void setupActionsColumn() {
+        colActions.setCellFactory(param -> new TableCell<>() {
+            private final Button editBtn = new Button("Edit");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox pane = new HBox(5, editBtn, deleteBtn);
+
+            {
+                editBtn.setOnAction(event -> handleEdit(getTableView().getItems().get(getIndex())));
+                deleteBtn.setOnAction(event -> handleDelete(getTableView().getItems().get(getIndex())));
+                deleteBtn.setStyle("-fx-text-fill: red;");
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(pane);
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void handleSearch() {
+        String query = searchField.getText();
+        if (query == null || query.isBlank()) {
+            loadTests();
+            return;
+        }
+        try {
+            ObservableList<TestDefinition> tests = FXCollections
+                    .observableArrayList(testDefinitionService.searchTests(query));
+            testTable.setItems(tests);
+            statusLabel.setText("Found " + tests.size() + " matches.");
+        } catch (Exception e) {
+            statusLabel.setText("Error searching: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleRefresh() {
+        searchField.clear();
+        loadTests();
+    }
+
+    @FXML
+    private void handleNewTest() {
+        showTestDialog(new TestDefinition());
+    }
+
+    private void handleEdit(TestDefinition test) {
+        showTestDialog(test);
+    }
+
+    private void handleDelete(TestDefinition test) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete Test");
+        alert.setHeaderText("Delete " + test.getTestName() + "?");
+        alert.setContentText("Are you sure? This cannot be undone.");
+
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            try {
+                testDefinitionService.deleteById(test.getId());
+                loadTests();
+                statusLabel.setText("Deleted test: " + test.getTestName());
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setContentText("Could not delete test: " + e.getMessage());
+                error.show();
+            }
+        }
+    }
+
+    private void showTestDialog(TestDefinition test) {
+        Dialog<TestDefinition> dialog = new Dialog<>();
+        dialog.setTitle(test.getId() == null ? "New Test" : "Edit Test");
+        dialog.setHeaderText(null);
+
+        // Set the button types.
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField name = new TextField(test.getTestName());
+        TextField code = new TextField(test.getShortCode());
+        TextField dept = new TextField(test.getDepartment());
+        TextField price = new TextField(test.getPrice() != null ? String.valueOf(test.getPrice()) : "");
+
+        grid.add(new Label("Test Name:"), 0, 0);
+        grid.add(name, 1, 0);
+        grid.add(new Label("Short Code:"), 0, 1);
+        grid.add(code, 1, 1);
+        grid.add(new Label("Department:"), 0, 2);
+        grid.add(dept, 1, 2);
+        grid.add(new Label("Price:"), 0, 3);
+        grid.add(price, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                test.setTestName(name.getText());
+                test.setShortCode(code.getText());
+                test.setDepartment(dept.getText());
+                try {
+                    if (!price.getText().isEmpty())
+                        test.setPrice(Double.parseDouble(price.getText()));
+                } catch (NumberFormatException e) {
+                    // ignore invalid price
+                }
+                return test;
+            }
+            return null;
+        });
+
+        Optional<TestDefinition> result = dialog.showAndWait();
+
+        result.ifPresent(t -> {
+            try {
+                testDefinitionService.save(t);
+                loadTests();
+                statusLabel.setText("Saved test: " + t.getTestName());
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setContentText("Could not save test: " + e.getMessage());
+                error.show();
+            }
+        });
+    }
+}

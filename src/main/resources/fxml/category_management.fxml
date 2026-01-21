@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.qdc.lims.desktop.controller.CategoryManagementController"
+      spacing="15" prefWidth="600" prefHeight="450" style="-fx-padding: 20;">
+    
+    <Label text="Test Category Management" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Label text="Manage departments/categories for test definitions." style="-fx-font-size: 14; -fx-text-fill: #7f8c8d;"/>
+    <Separator/>
+    
+    <HBox spacing="15" VBox.vgrow="ALWAYS">
+        <!-- List of Categories -->
+        <VBox spacing="10" HBox.hgrow="ALWAYS">
+            <Label text="Categories" style="-fx-font-weight: bold;"/>
+            <TableView fx:id="categoryTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="nameColumn" text="Category Name" prefWidth="200"/>
+                    <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="200"/>
+                </columns>
+            </TableView>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                 <Button text="Delete" onAction="#handleDelete" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+        
+        <!-- Add Form -->
+        <VBox spacing="15" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;" prefWidth="250">
+            <Label text="New Category" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+            
+            <VBox spacing="5">
+                <Label text="Name:"/>
+                <TextField fx:id="nameField" promptText="e.g. Hematology"/>
+            </VBox>
+            
+            <VBox spacing="5">
+                <Label text="Description:"/>
+                <TextArea fx:id="descriptionArea" promptText="Optional description" prefRowCount="3" wrapText="true"/>
+            </VBox>
+            
+            <Region VBox.vgrow="ALWAYS"/>
+            
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Clear" onAction="#handleClear" style="-fx-background-color: #95a5a6; -fx-text-fill: white;" />
+                <Button text="Save" onAction="#handleSave" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;" prefWidth="80"/>
+            </HBox>
+        </VBox>
+    </HBox>
+    
+    <Separator/>
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Close" onAction="#handleClose" style="-fx-background-color: #7f8c8d; -fx-text-fill: white;" prefWidth="100"/>
+    </HBox>
+</VBox>

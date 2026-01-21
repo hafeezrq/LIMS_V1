@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.AdminDashboardController"
+            fx:id="mainContainer">
+    
+    <!-- Top Menu Bar -->
+    <top>
+        <VBox>
+            <!-- Compact Header -->
+            <HBox style="-fx-background-color: #2c3e50; -fx-padding: 8 15;" spacing="10" alignment="CENTER_LEFT">
+                <Label text="⚙️ Admin Dashboard" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userLabel" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12;"/>
+                <!-- Dashboard Switcher (for users with multiple roles) -->
+                <ComboBox fx:id="dashboardSwitcher" promptText="Switch Dashboard" 
+                          style="-fx-background-color: white; -fx-font-size: 11;" 
+                          prefWidth="140"
+                          onAction="#handleDashboardSwitch"/>
+                <Button text="Logout" onAction="#handleLogout"
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-size: 11; -fx-padding: 5 12; -fx-background-radius: 4; -fx-cursor: hand;"/>
+            </HBox>
+            
+            <!-- Admin Menu Bar - Management & Finance Only -->
+            <MenuBar>
+                <Menu text="User Management">
+                    <MenuItem text="Manage Users" onAction="#handleUserManagement"/>
+                    <MenuItem text="User Roles &amp; Permissions" onAction="#handleUserRoles"/>
+                    <MenuItem text="Activity Logs" onAction="#handleActivityLogs"/>
+                </Menu>
+                
+                <Menu text="Inventory Management">
+                    <MenuItem text="View Stock" onAction="#handleViewStock"/>
+                    <MenuItem text="Suppliers" onAction="#handleSuppliers"/>
+                    <MenuItem text="Purchases &amp; Orders" onAction="#handlePurchases"/>
+                    <MenuItem text="Low Stock Alerts" onAction="#handleLowStock"/>
+                    <MenuItem text="Stock Adjustments" onAction="#handleStockAdjustments"/>
+                </Menu>
+                
+                <Menu text="Test Configuration">
+                    <MenuItem text="Test Definitions" onAction="#handleTestDefinitions"/>
+                    <MenuItem text="Test Recipes" onAction="#handleTestRecipes"/>
+                    <MenuItem text="Reference Ranges" onAction="#handleReferenceRanges"/>
+                    <MenuItem text="Test Categories" onAction="#handleTestCategories"/>
+                    <MenuItem text="Test Pricing" onAction="#handleTestPricing"/>
+                </Menu>
+                
+                <Menu text="Doctor Management">
+                    <MenuItem text="Doctor Panel" onAction="#handleDoctorPanel"/>
+                    <MenuItem text="Doctor Commissions" onAction="#handleDoctorCommissions"/>
+                    <MenuItem text="Commission Rates" onAction="#handleCommissionRates"/>
+                    <MenuItem text="Commission Payments" onAction="#handleCommissionPayments"/>
+                    <MenuItem text="Doctor Statistics" onAction="#handleDoctorStats"/>
+                </Menu>
+                
+                <Menu text="Finance &amp; Reports">
+                    <MenuItem text="Daily Revenue" onAction="#handleDailyRevenue"/>
+                    <MenuItem text="Monthly Revenue" onAction="#handleMonthlyRevenue"/>
+                    <MenuItem text="Commission Report" onAction="#handleCommissionReport"/>
+                    <MenuItem text="Payment History" onAction="#handlePaymentHistory"/>
+                    <MenuItem text="Outstanding Payments" onAction="#handleOutstandingPayments"/>
+                    <MenuItem text="Financial Queries" onAction="#handleFinancialQueries"/>
+                    <MenuItem text="Expense Management" onAction="#handleExpenses"/>
+                </Menu>
+                
+                <Menu text="System Settings">
+                    <MenuItem text="Backup &amp; Restore" onAction="#handleBackupSettings"/>
+                    <MenuItem text="Database Settings" onAction="#handleDatabaseSettings"/>
+                    <MenuItem text="System Configuration" onAction="#handleSystemConfig"/>
+                    <MenuItem text="Report Templates" onAction="#handleReportTemplates"/>
+                </Menu>
+            </MenuBar>
+        </VBox>
+    </top>
+    
+    <!-- Center Content -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background: #ecf0f1;">
+            <VBox spacing="30" style="-fx-background-color: #ecf0f1;">
+                <padding>
+                    <Insets top="30" right="30" bottom="30" left="30"/>
+                </padding>
+                
+                <!-- Welcome Message -->
+                <VBox alignment="CENTER" spacing="15">
+                    <Label text="Administration Panel" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Label fx:id="welcomeLabel" style="-fx-font-size: 18; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="roleLabel" style="-fx-font-size: 14; -fx-text-fill: #c0392b; -fx-font-weight: bold;"/>
+                    <Label text="System Management &amp; Configuration" style="-fx-font-size: 14; -fx-text-fill: #95a5a6; -fx-font-style: italic;"/>
+                </VBox>
+                
+                <!-- Management Sections -->
+                <GridPane hgap="20" vgap="20" alignment="CENTER">
+                    <!-- Row 1: User & Doctor Management -->
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <Label text="👥 User Management" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #3498db;"/>
+                        <Label text="Manage system users," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="roles &amp; permissions" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="Manage Users" onAction="#handleUserManagement" 
+                                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                    
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <Label text="🩺 Doctor Management" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                        <Label text="Manage doctors," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="commissions &amp; payments" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="Doctor Panel" onAction="#handleDoctorPanel" 
+                                style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                    
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                        <Label text="📦 Inventory" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #9b59b6;"/>
+                        <Label text="Stock management," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="suppliers &amp; purchases" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="View Inventory" onAction="#handleViewStock" 
+                                style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                    
+                    <!-- Row 2: Test Configuration & Finance -->
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                        <Label text="🧪 Test Configuration" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                        <Label text="Test definitions," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="recipes &amp; ranges" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="Configure Tests" onAction="#handleTestDefinitions" 
+                                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                    
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <Label text="💰 Finance &amp; Reports" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                        <Label text="Revenue, payments" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="&amp; financial queries" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="View Reports" onAction="#handleRevenueReports" 
+                                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                    
+                    <VBox spacing="10" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);" 
+                          prefWidth="250" prefHeight="150" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <Label text="⚙️ System Settings" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #34495e;"/>
+                        <Label text="Backup, database" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Label text="&amp; configuration" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
+                        <Button text="System Config" onAction="#handleSystemConfig" 
+                                style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
+                    </VBox>
+                </GridPane>
+                
+                <!-- Quick Stats Dashboard -->
+                <VBox spacing="15">
+                    <Label text="Quick Statistics" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <HBox spacing="20" alignment="CENTER">
+                        <VBox alignment="CENTER" spacing="5" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 8; -fx-min-width: 150;">
+                            <Label text="Total Users" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                            <Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #3498db;"/>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="5" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 8; -fx-min-width: 150;">
+                            <Label text="Active Doctors" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                            <Label fx:id="activeDoctorsLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="5" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 8; -fx-min-width: 150;">
+                            <Label text="Total Tests" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                            <Label fx:id="totalTestsLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                        </VBox>
+                        <VBox alignment="CENTER" spacing="5" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 8; -fx-min-width: 150;">
+                            <Label text="Today&apos;s Revenue" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                            <Label fx:id="todayRevenueLabel" text="\$0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+                
+                <!-- System Status -->
+                <VBox alignment="CENTER" spacing="10" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="System Status: Connected to Database" style="-fx-text-fill: #27ae60; -fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <Label text="Database: SQLite (embedded)" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11;"/>
+                    <HBox spacing="10" alignment="CENTER">
+                        <Label text="Need to do operational work?" style="-fx-text-fill: #7f8c8d; -fx-font-size: 11;"/>
+                        <Label text="Switch to Lab or Reception dashboard using the switcher above" style="-fx-text-fill: #3498db; -fx-font-size: 11; -fx-font-weight: bold;"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+    
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox style="-fx-background-color: #34495e; -fx-padding: 10;" spacing="20" alignment="CENTER_LEFT">
+            <Label fx:id="statusLabel" text="System Ready" style="-fx-text-fill: #27ae60; -fx-font-size: 11;"/>
+            <Label text="© 2024 QDC Laboratory" style="-fx-text-fill: white; -fx-font-size: 11;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="dateTimeLabel" text="" style="-fx-text-fill: #95a5a6; -fx-font-size: 11;"/>
+            <Label text="Version 1.0.0 (Desktop)" style="-fx-text-fill: #95a5a6; -fx-font-size: 10;"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

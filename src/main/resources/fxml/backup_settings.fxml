@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.qdc.lims.desktop.controller.BackupSettingsController"
+      spacing="15" style="-fx-background-color: #f5f5f5;">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label text="Backup &amp; Restore" style="-fx-font-size: 20; -fx-font-weight: bold;"/>
+    <Label text="Backups are stored in the app data folder and are encrypted." style="-fx-text-fill: #7f8c8d;"/>
+
+    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10;">
+        <Label text="Backup Password" style="-fx-font-weight: bold;"/>
+
+        <GridPane hgap="10" vgap="10">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="35"/>
+                <ColumnConstraints percentWidth="65"/>
+            </columnConstraints>
+
+            <Label text="New Password:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <PasswordField fx:id="backupPasswordField" GridPane.rowIndex="0" GridPane.columnIndex="1" promptText="Minimum 8 characters"/>
+
+            <Label text="Confirm:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <PasswordField fx:id="confirmPasswordField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        </GridPane>
+
+        <Button text="Save Password" onAction="#handleSavePassword"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20;"/>
+    </VBox>
+
+    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10;">
+        <Label text="Backup" style="-fx-font-weight: bold;"/>
+        <Button text="Backup Now" onAction="#handleBackupNow"
+                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 20;"/>
+    </VBox>
+
+    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10;">
+        <Label text="Restore" style="-fx-font-weight: bold;"/>
+        <Label text="Restoring will overwrite the current database and close the app." style="-fx-text-fill: #7f8c8d;" wrapText="true"/>
+        <Button text="Restore Backup..." onAction="#handleRestore"
+                style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-padding: 8 20;"/>
+    </VBox>
+
+    <Label fx:id="statusLabel" wrapText="true"/>
+
+    <HBox alignment="CENTER_RIGHT">
+        <Button text="Close" onAction="#handleClose"
+                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 8 20;"/>
+    </HBox>
+
+</VBox>

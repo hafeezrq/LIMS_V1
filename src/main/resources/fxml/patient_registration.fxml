@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.PatientRegistrationController"
+            prefWidth="900" prefHeight="700">
+    
+    <!-- Header -->
+    <top>
+        <VBox style="-fx-background-color: #3498db; -fx-padding: 20;">
+            <Label text="Patient Registration" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Register a new patient in the system" style="-fx-font-size: 12; -fx-text-fill: #ecf0f1;"/>
+        </VBox>
+    </top>
+    
+    <!-- Main Form -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <VBox spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 30;">
+                
+                <!-- Personal Information Section -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="Personal Information" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <!-- Full Name -->
+                        <Label text="Full Name *" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="fullNameField" promptText="Enter full name" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
+                        
+                        <!-- CNIC -->
+                        <Label text="CNIC" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="cnicField" promptText="xxxxx-xxxxxxx-x (optional)" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="300"/>
+                        
+                        <!-- Age -->
+                        <Label text="Age *" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
+                        <Spinner fx:id="ageSpinner" editable="true" GridPane.columnIndex="1" GridPane.rowIndex="2" prefWidth="150">
+                            <valueFactory>
+                                <SpinnerValueFactory.IntegerSpinnerValueFactory min="0" max="150" initialValue="0"/>
+                            </valueFactory>
+                        </Spinner>
+                        
+                        <!-- Gender -->
+                        <Label text="Gender" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-font-weight: bold;"/>
+                        <HBox spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                            <RadioButton fx:id="maleRadio" text="Male">
+                                <toggleGroup>
+                                    <ToggleGroup fx:id="genderGroup"/>
+                                </toggleGroup>
+                            </RadioButton>
+                            <RadioButton fx:id="femaleRadio" text="Female" toggleGroup="$genderGroup"/>
+                            <RadioButton fx:id="otherRadio" text="Other" toggleGroup="$genderGroup"/>
+                        </HBox>
+                    </GridPane>
+                </VBox>
+                
+                <!-- Contact Information Section -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="Contact Information" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <!-- Mobile Number -->
+                        <Label text="Mobile Number" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="mobileField" promptText="03xx-xxxxxxx" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
+                        
+                        <!-- City -->
+                        <Label text="City" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="cityField" promptText="Enter city or village" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="300"/>
+                    </GridPane>
+                </VBox>
+                
+                <!-- Error/Success Message -->
+                <Label fx:id="messageLabel" wrapText="true" style="-fx-font-size: 12;"/>
+                
+                <!-- Keyboard Shortcut Hint -->
+                <Label text="💡 Tip: Press Enter to register, or use Tab to navigate between fields" 
+                       style="-fx-font-size: 11; -fx-text-fill: #7f8c8d; -fx-font-style: italic;"
+                       wrapText="true"/>
+                
+                <!-- Buttons -->
+                <HBox spacing="15" alignment="CENTER">
+                    <Button text="Register Patient" onAction="#handleRegister" 
+                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                            prefWidth="180"/>
+                    <Button text="Clear Form" onAction="#handleClear" 
+                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                            prefWidth="150"/>
+                    <Button text="Close" onAction="#handleClose" 
+                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                            prefWidth="120"/>
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+    
+</BorderPane>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.qdc.lims.desktop.controller.DoctorPanelController"
+            prefWidth="1000" prefHeight="700">
+    
+    <!-- Top Bar -->
+    <top>
+        <VBox>
+            <HBox style="-fx-background-color: #e74c3c; -fx-padding: 15;" spacing="10" alignment="CENTER_LEFT">
+                <Label text="🩺 Doctor Management Panel" 
+                       style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="✕ Close" onAction="#handleClose" 
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5;"/>
+            </HBox>
+            
+            <!-- Search and Action Bar -->
+            <HBox style="-fx-background-color: #ecf0f1; -fx-padding: 15;" spacing="15" alignment="CENTER_LEFT">
+                <Label text="Search:" style="-fx-font-weight: bold;"/>
+                <TextField fx:id="searchField" promptText="Search by name, clinic, or mobile..." 
+                          prefWidth="300" onKeyReleased="#handleSearch"/>
+                <Button text="🔍 Search" onAction="#handleSearch" 
+                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="➕ Add New Doctor" onAction="#handleAddDoctor" 
+                        style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5; -fx-font-weight: bold;"/>
+                <Button text="🔄 Refresh" onAction="#handleRefresh" 
+                        style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 8 15; -fx-background-radius: 5;"/>
+            </HBox>
+        </VBox>
+    </top>
+    
+    <!-- Center: Doctor Table -->
+    <center>
+        <VBox style="-fx-background-color: white; -fx-padding: 20;">
+            <Label text="Registered Doctors" 
+                   style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 10 0;"/>
+            
+            <TableView fx:id="doctorTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="idColumn" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="nameColumn" text="Doctor Name" prefWidth="200"/>
+                    <TableColumn fx:id="clinicColumn" text="Clinic Name" prefWidth="200"/>
+                    <TableColumn fx:id="mobileColumn" text="Mobile" prefWidth="130"/>
+                    <TableColumn fx:id="commissionColumn" text="Commission %" prefWidth="100"/>
+                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="80"/>
+                    <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="200"/>
+                </columns>
+                <placeholder>
+                    <Label text="No doctors found. Click 'Add New Doctor' to get started." 
+                           style="-fx-text-fill: #95a5a6; -fx-font-size: 14;"/>
+                </placeholder>
+            </TableView>
+            
+            <!-- Statistics Bar -->
+            <HBox spacing="20" style="-fx-padding: 15 0 0 0;" alignment="CENTER">
+                <VBox alignment="CENTER" spacing="5" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
+                    <Label text="Total Doctors" style="-fx-font-size: 11; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="totalDoctorsLabel" text="0" 
+                           style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                </VBox>
+                <VBox alignment="CENTER" spacing="5" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
+                    <Label text="Active Doctors" style="-fx-font-size: 11; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="activeDoctorsLabel" text="0" 
+                           style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                </VBox>
+                <VBox alignment="CENTER" spacing="5" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
+                    <Label text="Inactive Doctors" style="-fx-font-size: 11; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="inactiveDoctorsLabel" text="0" 
+                           style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #95a5a6;"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+    
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox style="-fx-background-color: #34495e; -fx-padding: 10;" spacing="10" alignment="CENTER_LEFT">
+            <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: white; -fx-font-size: 11;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="💡 Tip: Double-click a row to edit doctor details" 
+                   style="-fx-text-fill: #95a5a6; -fx-font-size: 10;"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

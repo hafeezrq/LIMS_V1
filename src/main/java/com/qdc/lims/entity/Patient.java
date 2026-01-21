@@ -1,0 +1,58 @@
+package com.qdc.lims.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull; // Import for validation
+import lombok.Data;
+import java.time.LocalDate;
+
+/**
+ * Entity representing a patient, including demographic and registration details.
+ */
+@Entity
+@Data
+@Table(name = "patients", indexes = {
+        @Index(name = "idx_mrn", columnList = "mrn"),
+        @Index(name = "idx_cnic", columnList = "cnic")
+})
+public class Patient {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private String mrn;
+
+    @Column(unique = true)
+    private String cnic;
+
+    @Column(nullable = false)
+    private String fullName;
+
+    // --- NEW FIELDS ---
+
+    @NotNull(message = "Age is required")
+    @Column(nullable = false)
+    private Integer age; // Stores years (e.g., 25)
+
+    private String city; // e.g., "Lahore", "Village 45GB"
+
+    // ------------------
+
+    private String mobileNumber;
+
+    // We can keep DOB as optional, or remove it. Leaving it optional for now.
+    private LocalDate dateOfBirth;
+
+    private String gender;
+
+    private LocalDate registrationDate;
+
+    /**
+     * Sets the registration date before persisting the entity.
+     */
+    @PrePersist
+    protected void onCreate() {
+        this.registrationDate = LocalDate.now();
+    }
+}

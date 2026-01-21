@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.qdc.lims.desktop.controller.InventoryItemFormController"
+      spacing="15" prefWidth="500" prefHeight="550" style="-fx-padding: 20;">
+
+    <Label fx:id="titleLabel" text="New Inventory Item" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Separator/>
+
+    <GridPane hgap="10" vgap="15">
+        <columnConstraints>
+            <ColumnConstraints minWidth="120" prefWidth="120" halignment="RIGHT"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <!-- Item Name -->
+        <Label text="Item Name:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <TextField fx:id="itemNameField" promptText="e.g. Yellow Top Tube" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <!-- Unit -->
+        <Label text="Unit:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="unitComboBox" editable="true" promptText="Select or Type" GridPane.rowIndex="1" GridPane.columnIndex="1" maxWidth="Infinity"/>
+
+        <!-- Min Threshold -->
+        <Label text="Min Threshold:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="minThresholdField" promptText="Numeric value" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <!-- Current Stock (Only enabled for new items usually, but editable here for simplicity) -->
+        <Label text="Initial Stock:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="currentStockField" promptText="Numeric value" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <!-- Average Cost -->
+        <Label text="Avg. Cost:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="avgCostField" promptText="Cost per unit" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <!-- Supplier -->
+        <Label text="Supplier:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <HBox spacing="5" GridPane.rowIndex="5" GridPane.columnIndex="1">
+            <ComboBox fx:id="supplierComboBox" promptText="Choose Supplier" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        </HBox>
+        
+        <!-- Status -->
+        <Label text="Status:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <CheckBox fx:id="activeCheckBox" text="Active" selected="true" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+    </GridPane>
+
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" onAction="#handleCancel" style="-fx-min-width: 80;"/>
+        <Button text="Save Item" onAction="#handleSave" style="-fx-min-width: 100; -fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;"/>
+    </HBox>
+
+</VBox>

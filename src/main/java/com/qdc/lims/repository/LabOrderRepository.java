@@ -1,0 +1,85 @@
+package com.qdc.lims.repository;
+
+import com.qdc.lims.entity.LabOrder;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+/**
+ * Repository interface for LabOrder entities, providing CRUD operations and
+ * custom queries
+ * for dashboard statistics and patient order history.
+ */
+@Repository
+public interface LabOrderRepository extends JpaRepository<LabOrder, Long> {
+
+    /**
+     * Finds all orders for a specific patient, sorted by order ID in descending
+     * order.
+     *
+     * @param patientId the ID of the patient
+     * @return list of LabOrders for the patient, newest first
+     */
+    List<LabOrder> findByPatientIdOrderByIdDesc(Long patientId);
+
+    /**
+     * Finds orders with a specific status within a date range (for dashboard
+     * processing counts).
+     *
+     * @param status the order status (e.g., "PENDING", "COMPLETED")
+     * @param start  the start of the date range
+     * @param end    the end of the date range
+     * @return list of matching LabOrders
+     */
+    List<LabOrder> findByStatusAndOrderDateBetween(String status, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Finds completed orders that have not been delivered, within a date range (for
+     * pickup queue).
+     *
+     * @param status the order status (typically "COMPLETED")
+     * @param start  the start of the date range
+     * @param end    the end of the date range
+     * @return list of LabOrders ready for pickup
+     */
+    List<LabOrder> findByStatusAndIsReportDeliveredFalseAndOrderDateBetween(String status, LocalDateTime start,
+            LocalDateTime end);
+
+    /**
+     * Finds orders that were delivered (collected) within a specific date range.
+     *
+     * @param start the start of the delivery date range
+     * @param end   the end of the delivery date range
+     * @return list of collected LabOrders
+     */
+    List<LabOrder> findByIsReportDeliveredTrueAndDeliveryDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Finds all orders created within a specific date range.
+     *
+     * @param start the start of the order date range
+     * @param end   the end of the order date range
+     * @return list of LabOrders within the date range
+     */
+    List<LabOrder> findByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Counts the number of orders within a specific date range.
+     *
+     * @param start the start of the order date range
+     * @param end   the end of the order date range
+     * @return the count of LabOrders within the date range
+     */
+    long countByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Finds orders that have an outstanding balance due.
+     *
+     * @param minBalance the minimum balance (usually 0)
+     * @return list of orders with unpaid balance
+     */
+    List<LabOrder> findByBalanceDueGreaterThan(Double minBalance);
+}

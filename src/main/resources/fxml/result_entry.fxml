@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.ResultEntryController"
+            prefWidth="900" prefHeight="700">
+    
+    <!-- Header -->
+    <top>
+        <VBox style="-fx-background-color: #16a085; -fx-padding: 20;">
+            <Label text="Enter Test Results" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label fx:id="orderInfoLabel" style="-fx-font-size: 12; -fx-text-fill: #ecf0f1;"/>
+        </VBox>
+    </top>
+    
+    <!-- Main Content -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <VBox spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 20;">
+                
+                <!-- Patient Info Card -->
+                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="Patient Information" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                    <Separator/>
+                    <GridPane hgap="15" vgap="10">
+                        <Label text="MRN:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="mrnLabel" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="nameLabel" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        
+                        <Label text="Age/Gender:" GridPane.columnIndex="2" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="ageGenderLabel" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                        
+                        <Label text="Order Date:" GridPane.columnIndex="2" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="orderDateLabel" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                    </GridPane>
+                </VBox>
+                
+                <!-- Test Results Table -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                    <Label text="Test Results" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                    <Separator/>
+                    
+                    <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS" editable="true">
+                        <columns>
+                            <TableColumn fx:id="testNameColumn" text="Test Name" prefWidth="250" editable="false"/>
+                            <TableColumn fx:id="resultValueColumn" text="Result Value" prefWidth="150"/>
+                            <TableColumn fx:id="unitColumn" text="Unit" prefWidth="80" editable="false"/>
+                            <TableColumn fx:id="referenceRangeColumn" text="Reference Range" prefWidth="150" editable="false"/>
+                            <TableColumn fx:id="statusColumn" text="Status" prefWidth="120" editable="false"/>
+                        </columns>
+                    </TableView>
+                    
+                    <HBox spacing="10" style="-fx-background-color: #ecf0f1; -fx-padding: 10; -fx-background-radius: 5;">
+                        <Label text="💡 Tip:" style="-fx-font-weight: bold;"/>
+                        <Label text="Click on Result Value cells to enter values. Status will be auto-calculated based on reference ranges." 
+                               wrapText="true" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Message Label -->
+                <Label fx:id="messageLabel" wrapText="true" style="-fx-font-size: 12;"/>
+            </VBox>
+        </ScrollPane>
+    </center>
+    
+    <!-- Footer Actions -->
+    <bottom>
+        <HBox spacing="15" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20;">
+            <Button text="Save Results" onAction="#handleSaveResults" 
+                    style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 40; -fx-background-radius: 5; -fx-font-weight: bold;"
+                    prefWidth="200"/>
+            <Button text="Mark as Completed" onAction="#handleMarkCompleted" 
+                    style="-fx-background-color: #16a085; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 40; -fx-background-radius: 5; -fx-font-weight: bold;"
+                    prefWidth="200"/>
+            <Button text="Close" onAction="#handleClose" 
+                    style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                    prefWidth="150"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.ReceptionDashboardController"
+            fx:id="mainContainer">
+    
+    <!-- Top Header Bar -->
+    <top>
+        <VBox>
+            <!-- Compact Header -->
+            <HBox style="-fx-background-color: #2ecc71; -fx-padding: 8 15;" spacing="10" alignment="CENTER_LEFT">
+                <Label text="Reception Dashboard" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userLabel" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12;"/>
+                <ComboBox fx:id="dashboardSwitcher" promptText="Switch Dashboard" 
+                          style="-fx-background-color: white; -fx-font-size: 11;" 
+                          prefWidth="140"
+                          onAction="#handleDashboardSwitch"/>
+                <Button text="Logout" onAction="#handleLogout"
+                        style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-size: 11; -fx-padding: 5 12; -fx-background-radius: 4; -fx-cursor: hand;"/>
+            </HBox>
+            
+            <!-- Menu Bar -->
+            <MenuBar>
+                <Menu text="Patient">
+                    <MenuItem text="Register New Patient" onAction="#handleRegisterPatient"/>
+                    <MenuItem text="Create Lab Order" onAction="#handleCreateOrder"/>
+                </Menu>
+                
+                <Menu text="Orders">
+                    <MenuItem text="Search Order by MRN" onAction="#handleSearchOrder"/>
+                    <MenuItem text="Reprint Receipt" onAction="#handleReprintReceipt"/>
+                </Menu>
+                
+                <Menu text="Reports">
+                    <MenuItem text="Ready for Pickup" onAction="#handleShowReadyOrders"/>
+                    <MenuItem text="Pending in Lab" onAction="#handleShowPendingOrders"/>
+                </Menu>
+            </MenuBar>
+        </VBox>
+    </top>
+    
+    <!-- Main Content -->
+    <center>
+        <HBox spacing="15" style="-fx-background-color: #ecf0f1;">
+            <padding>
+                <Insets top="15" right="15" bottom="15" left="15"/>
+            </padding>
+            
+            <!-- Left Panel: Quick Actions -->
+            <VBox spacing="15" prefWidth="250" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                
+                <!-- Welcome Section -->
+                <VBox spacing="5" alignment="CENTER">
+                    <Label fx:id="welcomeLabel" text="Welcome" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Label fx:id="dateTimeLabel" text="" style="-fx-font-size: 11; -fx-text-fill: #7f8c8d;"/>
+                </VBox>
+                
+                <Separator/>
+                
+                <Label text="Quick Actions" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                
+                <!-- Primary Actions -->
+                <Button text="Register New Patient" onAction="#handleRegisterPatient" 
+                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 12; -fx-background-radius: 5; -fx-cursor: hand;"
+                        maxWidth="Infinity"/>
+                
+                <Button text="Create Lab Order" onAction="#handleCreateOrder" 
+                        style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 12; -fx-background-radius: 5; -fx-cursor: hand;"
+                        maxWidth="Infinity"/>
+                
+                <Separator/>
+                
+                <Label text="Order Status" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                
+                <!-- Status Counters -->
+                <VBox fx:id="readyPanel" spacing="5" alignment="CENTER" 
+                      style="-fx-background-color: #27ae60; -fx-padding: 12; -fx-background-radius: 5; -fx-cursor: hand;"
+                      onMouseClicked="#handleShowReadyOrders">
+                    <Label text="Ready for Pickup" style="-fx-font-size: 12; -fx-text-fill: white;"/>
+                    <Label fx:id="readyCountLabel" text="0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                </VBox>
+                
+                <VBox fx:id="pendingPanel" spacing="5" alignment="CENTER" 
+                      style="-fx-background-color: #e67e22; -fx-padding: 12; -fx-background-radius: 5; -fx-cursor: hand;"
+                      onMouseClicked="#handleShowPendingOrders">
+                    <Label text="Pending in Lab" style="-fx-font-size: 12; -fx-text-fill: white;"/>
+                    <Label fx:id="pendingCountLabel" text="0" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                </VBox>
+                
+                <Region VBox.vgrow="ALWAYS"/>
+                
+                <Button text="Reprint Receipt" onAction="#handleReprintReceipt"
+                        style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10; -fx-background-radius: 5; -fx-cursor: hand;"
+                        maxWidth="Infinity"/>
+                
+                <Button text="Refresh" onAction="#handleRefresh"
+                        style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-size: 11; -fx-padding: 8; -fx-background-radius: 5; -fx-cursor: hand;"
+                        maxWidth="Infinity"/>
+            </VBox>
+            
+            <!-- Right Panel: Orders Table -->
+            <VBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Orders" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField fx:id="searchField" promptText="Search by MRN or Patient Name..." prefWidth="250"/>
+                    <Button text="Search" onAction="#handleSearchInTable"
+                            style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 5 15;"/>
+                </HBox>
+                
+                <TabPane fx:id="ordersTabPane" VBox.vgrow="ALWAYS">
+                    <Tab text="Ready for Pickup" closable="false">
+                        <VBox spacing="10" style="-fx-padding: 10;">
+                            <TableView fx:id="readyOrdersTable" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="readyOrderIdCol" text="Order #" prefWidth="80"/>
+                                    <TableColumn fx:id="readyMrnCol" text="MRN" prefWidth="100"/>
+                                    <TableColumn fx:id="readyPatientCol" text="Patient Name" prefWidth="180"/>
+                                    <TableColumn fx:id="readyDateCol" text="Order Date" prefWidth="130"/>
+                                    <TableColumn fx:id="readyBalanceCol" text="Balance Due" prefWidth="100"/>
+                                    <TableColumn fx:id="readyActionCol" text="Action" prefWidth="120"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No orders ready for pickup" style="-fx-text-fill: #7f8c8d;"/>
+                                </placeholder>
+                            </TableView>
+                            <HBox spacing="10" alignment="CENTER_RIGHT">
+                                <Button text="Deliver Report" onAction="#handleDeliverReport"
+                                        style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 4;"/>
+                            </HBox>
+                        </VBox>
+                    </Tab>
+                    
+                    <Tab text="Pending in Lab" closable="false">
+                        <VBox spacing="10" style="-fx-padding: 10;">
+                            <TableView fx:id="pendingOrdersTable" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="pendingOrderIdCol" text="Order #" prefWidth="80"/>
+                                    <TableColumn fx:id="pendingMrnCol" text="MRN" prefWidth="100"/>
+                                    <TableColumn fx:id="pendingPatientCol" text="Patient Name" prefWidth="180"/>
+                                    <TableColumn fx:id="pendingDateCol" text="Order Date" prefWidth="130"/>
+                                    <TableColumn fx:id="pendingStatusCol" text="Status" prefWidth="100"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No pending orders" style="-fx-text-fill: #7f8c8d;"/>
+                                </placeholder>
+                            </TableView>
+                        </VBox>
+                    </Tab>
+                </TabPane>
+                
+            </VBox>
+        </HBox>
+    </center>
+    
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox style="-fx-background-color: #27ae60; -fx-padding: 8;" spacing="15" alignment="CENTER_LEFT">
+            <Label text="QDC Laboratory - Reception" style="-fx-text-fill: white; -fx-font-size: 11;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 10;"/>
+        </HBox>
+    </bottom>
+    
+</BorderPane>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.CreateOrderController"
+            prefWidth="1000" prefHeight="750">
+    
+    <!-- Header -->
+    <top>
+        <VBox style="-fx-background-color: #2ecc71; -fx-padding: 20;">
+            <Label text="Create Lab Order" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Book tests for a patient" style="-fx-font-size: 12; -fx-text-fill: #ecf0f1;"/>
+        </VBox>
+    </top>
+    
+    <!-- Main Content -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <VBox spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 30;">
+                
+                <!-- Patient Selection -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="1. Select Patient" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <Label text="Search Patient by MRN or Name:" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="patientSearchField" promptText="Enter MRN or name..." prefWidth="300"/>
+                        <Button text="Search" onAction="#handleSearchPatient" 
+                                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20;"/>
+                    </HBox>
+                    
+                    <VBox fx:id="patientInfoBox" spacing="5" visible="false" managed="false"
+                          style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
+                        <Label fx:id="patientNameLabel" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
+                        <Label fx:id="patientDetailsLabel" style="-fx-font-size: 12;"/>
+                    </VBox>
+                </VBox>
+                
+                <!-- Doctor Selection -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="2. Referring Doctor (Optional)" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <Label text="Select Doctor:" style="-fx-font-weight: bold;"/>
+                        <ComboBox fx:id="doctorComboBox" promptText="-- None / Self --" prefWidth="350"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Test Selection -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="3. Select Tests" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <ListView fx:id="testsListView" prefHeight="250" 
+                              style="-fx-border-color: #bdc3c7; -fx-border-radius: 5;"/>
+                    
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <Label text="Selected Tests:" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="selectedTestsCountLabel" text="0" style="-fx-text-fill: #3498db; -fx-font-weight: bold;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Total Amount:" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="totalAmountLabel" text="Rs. 0.00" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Billing Information -->
+                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
+                    <Label text="4. Billing" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                    <Separator/>
+                    
+                    <GridPane hgap="15" vgap="15">
+                        <Label text="Discount (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="discountField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="150"/>
+                        
+                        <Label text="Cash Paid (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                        <TextField fx:id="cashPaidField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="150"/>
+                        
+                        <Label text="Balance:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
+                        <Label fx:id="balanceLabel" text="Rs. 0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" 
+                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                    </GridPane>
+                </VBox>
+                
+                <!-- Message and Actions -->
+                <Label fx:id="messageLabel" wrapText="true" style="-fx-font-size: 12;"/>
+                
+                <HBox spacing="15" alignment="CENTER">
+                    <Button text="Create Order" onAction="#handleCreateOrder" 
+                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 40; -fx-background-radius: 5; -fx-font-weight: bold;"
+                            prefWidth="200"/>
+                    <Button text="Clear" onAction="#handleClear" 
+                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                            prefWidth="150"/>
+                    <Button text="Close" onAction="#handleClose" 
+                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                            prefWidth="120"/>
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+    
+</BorderPane>

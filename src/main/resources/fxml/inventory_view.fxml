@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.qdc.lims.desktop.controller.InventoryViewController"
+            prefWidth="1100" prefHeight="700">
+    
+    <!-- Header -->
+    <top>
+        <VBox style="-fx-background-color: #9b59b6; -fx-padding: 20;">
+            <Label text="Inventory Management" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="View stock levels and track inventory" style="-fx-font-size: 12; -fx-text-fill: #ecf0f1;"/>
+        </VBox>
+    </top>
+    
+    <!-- Main Content -->
+    <center>
+        <VBox spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 30;">
+            
+            <!-- Filter and Actions -->
+            <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10;">
+                <Button text="Add Item" onAction="#handleAddItem" 
+                        style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 20; -fx-font-weight: bold;"/>
+                
+                <Separator orientation="VERTICAL"/>
+
+                <Label text="Filter:" style="-fx-font-weight: bold;"/>
+                <RadioButton fx:id="allItemsRadio" text="All Items" selected="true" onAction="#handleFilterChange">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="filterGroup"/>
+                    </toggleGroup>
+                </RadioButton>
+                <RadioButton fx:id="lowStockRadio" text="Low Stock Only" toggleGroup="$filterGroup" onAction="#handleFilterChange"/>
+                <RadioButton fx:id="outOfStockRadio" text="Out of Stock" toggleGroup="$filterGroup" onAction="#handleFilterChange"/>
+                
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <TextField fx:id="searchField" promptText="Search item..." prefWidth="200"/>
+                <Button text="Search" onAction="#handleSearch" 
+                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20;"/>
+                <Button text="Refresh" onAction="#handleRefresh" 
+                        style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 8 20;"/>
+            </HBox>
+            
+            <!-- Stats Summary -->
+            <HBox spacing="20" alignment="CENTER">
+                <!-- Total Items Card -->
+                <VBox spacing="5" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);"
+                      HBox.hgrow="ALWAYS">
+                    <Label text="Total Items" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="totalItemsLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #3498db;"/>
+                </VBox>
+                
+                <!-- Low Stock Card -->
+                <VBox spacing="5" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);"
+                      HBox.hgrow="ALWAYS">
+                    <Label text="Low Stock" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="lowStockCountLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
+                </VBox>
+                
+                <!-- Out of Stock Card -->
+                <VBox spacing="5" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);"
+                      HBox.hgrow="ALWAYS">
+                    <Label text="Out of Stock" style="-fx-font-size: 12; -fx-text-fill: #7f8c8d;"/>
+                    <Label fx:id="outOfStockCountLabel" text="0" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                </VBox>
+            </HBox>
+            
+            <!-- Inventory Table -->
+            <TableView fx:id="inventoryTable" style="-fx-background-color: white; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="itemNameColumn" text="Item Name" prefWidth="250"/>
+                    <TableColumn fx:id="categoryColumn" text="Category" prefWidth="150"/>
+                    <TableColumn fx:id="currentStockColumn" text="Current Stock" prefWidth="130"/>
+                    <TableColumn fx:id="unitColumn" text="Unit" prefWidth="100"/>
+                    <TableColumn fx:id="minStockColumn" text="Min Stock" prefWidth="130"/>
+                    <TableColumn fx:id="supplierColumn" text="Supplier" prefWidth="180"/>
+                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="140"/>
+                </columns>
+                <contextMenu>
+                    <ContextMenu>
+                        <items>
+                            <MenuItem text="Edit Item" onAction="#handleEditItem"/>
+                            <MenuItem text="Quick Stock Adjustment" onAction="#handleQuickAdjustment"/>
+                            <SeparatorMenuItem/>
+                            <MenuItem text="Delete Item" onAction="#handleDeleteItem"/>
+                        </items>
+                    </ContextMenu>
+                </contextMenu>
+            </TableView>
+            
+            <!-- Action Buttons -->
+            <HBox spacing="15" alignment="CENTER">
+                <Button text="Manage Suppliers" onAction="#handleManageSuppliers" 
+                        style="-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                        prefWidth="200"/>
+                
+                <Button text="Close" onAction="#handleClose" 
+                        style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                        prefWidth="150"/>
+            </HBox>
+        </VBox>
+    </center>
+    
+</BorderPane>
