@@ -51,20 +51,20 @@
                 <!-- Primary Lab Actions -->
                 <HBox spacing="25" alignment="CENTER">
                     <VBox alignment="CENTER" spacing="10" 
-                          style="-fx-background-color: #e67e22; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2);">
+                          style="-fx-background-color: #e67e22; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2); -fx-cursor: hand;">
                         <Label text="Pending Tests" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
                         <Label fx:id="pendingCountLabel" text="0" style="-fx-font-size: 36; -fx-font-weight: bold; -fx-text-fill: white;"/>
                         <Button text="View Worklist" onAction="#handleWorklist" 
-                                style="-fx-background-color: white; -fx-text-fill: #e67e22; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                                style="-fx-background-color: white; -fx-text-fill: #e67e22; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;"
                                 prefWidth="180"/>
                     </VBox>
                     
                     <VBox alignment="CENTER" spacing="10" 
-                          style="-fx-background-color: #27ae60; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2);">
+                          style="-fx-background-color: #27ae60; -fx-padding: 30; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2); -fx-cursor: hand;">
                         <Label text="Completed Today" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
                         <Label fx:id="completedCountLabel" text="0" style="-fx-font-size: 36; -fx-font-weight: bold; -fx-text-fill: white;"/>
                         <Button text="View Completed" onAction="#handleCompletedTests" 
-                                style="-fx-background-color: white; -fx-text-fill: #27ae60; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                                style="-fx-background-color: white; -fx-text-fill: #27ae60; -fx-font-size: 14; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold; -fx-cursor: hand;"
                                 prefWidth="180"/>
                     </VBox>
                 </HBox>
