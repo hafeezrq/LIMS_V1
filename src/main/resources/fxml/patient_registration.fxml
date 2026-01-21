@@ -6,7 +6,8 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.qdc.lims.desktop.controller.PatientRegistrationController"
-            prefWidth="550" prefHeight="620">
+            prefWidth="550" prefHeight="620"
+            stylesheets="@/static/styles.css">
     
     <!-- Header -->
     <top>
@@ -83,13 +84,13 @@
                 <!-- Buttons -->
                 <HBox spacing="15" alignment="CENTER">
                     <Button text="Register Patient" onAction="#handleRegister" 
-                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 25; -fx-background-radius: 5; -fx-font-weight: bold;"
+                            styleClass="btn-success"
                             prefWidth="160"/>
                     <Button text="Clear Form" onAction="#handleClear" 
-                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
+                            styleClass="btn-secondary"
                             prefWidth="120"/>
                     <Button text="Close" onAction="#handleClose" 
-                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
+                            styleClass="btn-danger"
                             prefWidth="100"/>
                 </HBox>
             </VBox>

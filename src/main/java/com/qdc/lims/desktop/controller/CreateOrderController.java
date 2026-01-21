@@ -354,8 +354,7 @@ public class CreateOrderController {
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
 
         Button printNormalBtn = new Button("🖨 Normal Print");
-        printNormalBtn.setStyle(
-                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        printNormalBtn.getStyleClass().add("btn-primary");
         printNormalBtn.setOnAction(e -> {
             printReceipt(order, "NORMAL");
             dialog.close();
@@ -363,8 +362,7 @@ public class CreateOrderController {
         });
 
         Button printThermalBtn = new Button("🧾 Thermal Print");
-        printThermalBtn.setStyle(
-                "-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        printThermalBtn.getStyleClass().add("btn-purple");
         printThermalBtn.setOnAction(e -> {
             printReceipt(order, "THERMAL");
             dialog.close();
@@ -372,8 +370,7 @@ public class CreateOrderController {
         });
 
         Button skipBtn = new Button("Skip Print");
-        skipBtn.setStyle(
-                "-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        skipBtn.getStyleClass().add("btn-secondary");
         skipBtn.setOnAction(e -> {
             dialog.close();
             closeCreateOrderWindow();
@@ -385,6 +382,9 @@ public class CreateOrderController {
 
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+
+        // Load stylesheet for button hover effects
+        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/static/styles.css").toExternalForm());
 
         // Hide the default close button since we have our own buttons
         dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setVisible(false);

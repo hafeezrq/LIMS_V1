@@ -6,7 +6,8 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.qdc.lims.desktop.controller.CreateOrderController"
-            prefWidth="900" prefHeight="800">
+            prefWidth="900" prefHeight="800"
+            stylesheets="@/static/styles.css">
     
     <!-- Header -->
     <top>
@@ -29,7 +30,7 @@
                         <Label text="Search Patient by MRN or Name:" style="-fx-font-weight: bold;"/>
                         <TextField fx:id="patientSearchField" promptText="Enter MRN or name..." prefWidth="300"/>
                         <Button text="Search" onAction="#handleSearchPatient" 
-                                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20;"/>
+                                styleClass="btn-primary"/>
                     </HBox>
                     
                     <VBox fx:id="patientInfoBox" spacing="5" visible="false" managed="false"
@@ -90,13 +91,13 @@
                 
                 <HBox spacing="15" alignment="CENTER">
                     <Button text="Create Order" onAction="#handleCreateOrder" 
-                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 30; -fx-background-radius: 5; -fx-font-weight: bold;"
+                            styleClass="btn-success"
                             prefWidth="160"/>
                     <Button text="Clear" onAction="#handleClear" 
-                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
+                            styleClass="btn-secondary"
                             prefWidth="120"/>
                     <Button text="Close" onAction="#handleClose" 
-                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
+                            styleClass="btn-danger"
                             prefWidth="100"/>
                 </HBox>
             </VBox>
