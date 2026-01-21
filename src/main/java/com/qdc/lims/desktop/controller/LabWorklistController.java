@@ -27,105 +27,111 @@ public class LabWorklistController {
 
     @FXML
     private RadioButton pendingRadio;
-    
+
     @FXML
     private RadioButton completedRadio;
-    
+
     @FXML
     private RadioButton allRadio;
-    
+
     @FXML
     private TextField searchField;
-    
+
     @FXML
     private Label pendingCountLabel;
-    
+
     @FXML
     private Label completedTodayLabel;
-    
+
     @FXML
     private Label totalOrdersLabel;
-    
+
     @FXML
     private TableView<LabOrder> ordersTable;
-    
+
     @FXML
     private TableColumn<LabOrder, Long> orderIdColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, String> mrnColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, String> patientNameColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, String> ageGenderColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, Integer> testCountColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, String> orderDateColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, String> statusColumn;
-    
+
     @FXML
     private TableColumn<LabOrder, Void> actionColumn;
-    
+
     private final LabOrderRepository orderRepository;
     private final ApplicationContext springContext;
     private List<LabOrder> allOrders;
-    
+
+    // Flag to show completed tests on initialization
+    private boolean showCompletedOnInit = false;
+
     public LabWorklistController(LabOrderRepository orderRepository, ApplicationContext springContext) {
         this.orderRepository = orderRepository;
         this.springContext = springContext;
     }
-    
+
+    /**
+     * Set to show completed tests when the window opens.
+     * Must be called before initialize() runs (i.e., after load but before show).
+     */
+    public void setShowCompletedOnInit(boolean showCompleted) {
+        this.showCompletedOnInit = showCompleted;
+    }
+
     @FXML
     private void initialize() {
         setupTableColumns();
         loadOrders();
         updateStats();
+
+        // If flagged to show completed tests, select the completed radio button
+        if (showCompletedOnInit) {
+            completedRadio.setSelected(true);
+            applyFilter();
+        }
     }
-    
+
     private void setupTableColumns() {
         orderIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        
-        mrnColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getPatient().getMrn()
-            )
-        );
-        
-        patientNameColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getPatient().getFullName()
-            )
-        );
-        
+
+        mrnColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
+                cellData.getValue().getPatient().getMrn()));
+
+        patientNameColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
+                cellData.getValue().getPatient().getFullName()));
+
         ageGenderColumn.setCellValueFactory(cellData -> {
             var patient = cellData.getValue().getPatient();
             return new javafx.beans.property.SimpleStringProperty(
-                patient.getAge() + " / " + patient.getGender()
-            );
+                    patient.getAge() + " / " + patient.getGender());
         });
-        
-        testCountColumn.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleIntegerProperty(
-                cellData.getValue().getResults().size()
-            ).asObject()
-        );
-        
+
+        testCountColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleIntegerProperty(
+                cellData.getValue().getResults().size()).asObject());
+
         orderDateColumn.setCellValueFactory(cellData -> {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             return new javafx.beans.property.SimpleStringProperty(
-                cellData.getValue().getOrderDate().format(formatter)
-            );
+                    cellData.getValue().getOrderDate().format(formatter));
         });
-        
+
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-        
+
         // Color-code status
         statusColumn.setCellFactory(column -> new TableCell<LabOrder, String>() {
             @Override
@@ -144,19 +150,26 @@ public class LabWorklistController {
                 }
             }
         });
-        
+
         // Action buttons in table
         actionColumn.setCellFactory(param -> new TableCell<>() {
             private final Button enterResultsBtn = new Button("Enter Results");
-            
+            private final Button editResultsBtn = new Button("Edit Results");
+
             {
                 enterResultsBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 5 10;");
                 enterResultsBtn.setOnAction(event -> {
                     LabOrder order = getTableView().getItems().get(getIndex());
                     openResultEntryForm(order);
                 });
+
+                editResultsBtn.setStyle("-fx-background-color: #e67e22; -fx-text-fill: white; -fx-padding: 5 10;");
+                editResultsBtn.setOnAction(event -> {
+                    LabOrder order = getTableView().getItems().get(getIndex());
+                    openResultEntryForm(order);
+                });
             }
-            
+
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
@@ -167,77 +180,74 @@ public class LabWorklistController {
                     if (order.getStatus().equals("PENDING")) {
                         setGraphic(enterResultsBtn);
                     } else {
-                        Label completedLabel = new Label("✓ Done");
-                        completedLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                        setGraphic(completedLabel);
+                        // Allow editing completed orders to fix mistakes
+                        setGraphic(editResultsBtn);
                     }
                 }
             }
         });
     }
-    
+
     private void loadOrders() {
         allOrders = orderRepository.findAll();
         applyFilter();
     }
-    
+
     private void applyFilter() {
         List<LabOrder> filteredOrders = allOrders;
-        
+
         if (pendingRadio.isSelected()) {
             filteredOrders = allOrders.stream()
-                .filter(order -> order.getStatus().equals("PENDING"))
-                .collect(Collectors.toList());
+                    .filter(order -> order.getStatus().equals("PENDING"))
+                    .collect(Collectors.toList());
         } else if (completedRadio.isSelected()) {
             filteredOrders = allOrders.stream()
-                .filter(order -> order.getStatus().equals("COMPLETED"))
-                .collect(Collectors.toList());
+                    .filter(order -> order.getStatus().equals("COMPLETED"))
+                    .collect(Collectors.toList());
         }
-        
+
         ObservableList<LabOrder> observableOrders = FXCollections.observableArrayList(filteredOrders);
         ordersTable.setItems(observableOrders);
     }
-    
+
     private void updateStats() {
         long pending = allOrders.stream()
-            .filter(order -> order.getStatus().equals("PENDING"))
-            .count();
-        
+                .filter(order -> order.getStatus().equals("PENDING"))
+                .count();
+
         long completedToday = allOrders.stream()
-            .filter(order -> order.getStatus().equals("COMPLETED") &&
-                           order.getOrderDate().toLocalDate().equals(LocalDate.now()))
-            .count();
-        
+                .filter(order -> order.getStatus().equals("COMPLETED") &&
+                        order.getOrderDate().toLocalDate().equals(LocalDate.now()))
+                .count();
+
         pendingCountLabel.setText(String.valueOf(pending));
         completedTodayLabel.setText(String.valueOf(completedToday));
         totalOrdersLabel.setText(String.valueOf(allOrders.size()));
     }
-    
+
     @FXML
     private void handleFilterChange() {
         applyFilter();
     }
-    
+
     @FXML
     private void handleSearch() {
         String searchTerm = searchField.getText().trim().toLowerCase();
-        
+
         if (searchTerm.isEmpty()) {
             applyFilter();
             return;
         }
-        
+
         List<LabOrder> searchResults = allOrders.stream()
-            .filter(order -> 
-                order.getPatient().getMrn().toLowerCase().contains(searchTerm) ||
-                order.getPatient().getFullName().toLowerCase().contains(searchTerm)
-            )
-            .collect(Collectors.toList());
-        
+                .filter(order -> order.getPatient().getMrn().toLowerCase().contains(searchTerm) ||
+                        order.getPatient().getFullName().toLowerCase().contains(searchTerm))
+                .collect(Collectors.toList());
+
         ObservableList<LabOrder> observableOrders = FXCollections.observableArrayList(searchResults);
         ordersTable.setItems(observableOrders);
     }
-    
+
     @FXML
     private void handleRefresh() {
         searchField.clear();
@@ -245,23 +255,18 @@ public class LabWorklistController {
         loadOrders();
         updateStats();
     }
-    
+
     @FXML
     private void handleEnterResults() {
         LabOrder selectedOrder = ordersTable.getSelectionModel().getSelectedItem();
         if (selectedOrder == null) {
-            showAlert("Please select an order to enter results");
+            showAlert("Please select an order to enter or edit results");
             return;
         }
-        
-        if (selectedOrder.getStatus().equals("COMPLETED")) {
-            showAlert("This order is already completed");
-            return;
-        }
-        
+
         openResultEntryForm(selectedOrder);
     }
-    
+
     @FXML
     private void handleViewDetails() {
         LabOrder selectedOrder = ordersTable.getSelectionModel().getSelectedItem();
@@ -269,19 +274,19 @@ public class LabWorklistController {
             showAlert("Please select an order to view");
             return;
         }
-        
+
         openResultEntryForm(selectedOrder);
     }
-    
+
     private void openResultEntryForm(LabOrder order) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/result_entry.fxml"));
             loader.setControllerFactory(springContext::getBean);
             Parent root = loader.load();
-            
+
             ResultEntryController controller = loader.getController();
             controller.setOrder(order);
-            
+
             Stage stage = new Stage();
             stage.setTitle("Enter Results - Order #" + order.getId());
             stage.setScene(new Scene(root));
@@ -294,13 +299,13 @@ public class LabWorklistController {
             showAlert("Failed to open result entry: " + e.getMessage());
         }
     }
-    
+
     @FXML
     private void handleClose() {
         Stage stage = (Stage) ordersTable.getScene().getWindow();
         stage.close();
     }
-    
+
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Information");

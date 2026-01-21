@@ -62,6 +62,9 @@ public class ResultEntryController {
     @FXML
     private Label messageLabel;
 
+    @FXML
+    private Button saveButton;
+
     private final LabOrderRepository orderRepository;
     private final LabResultRepository resultRepository;
     private final ResultService resultService;
@@ -226,8 +229,22 @@ public class ResultEntryController {
         currentOrder = orderRepository.findById(currentOrder.getId())
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // Set order info
-        orderInfoLabel.setText("Order #" + currentOrder.getId() + " - Status: " + currentOrder.getStatus());
+        // Check if this is editing a completed order
+        boolean isEditMode = "COMPLETED".equals(currentOrder.getStatus());
+
+        // Set order info with appropriate label
+        if (isEditMode) {
+            orderInfoLabel.setText("Order #" + currentOrder.getId() + " - EDITING COMPLETED RESULTS");
+            // Change save button text for edit mode
+            if (saveButton != null) {
+                saveButton.setText("Save Corrections");
+            }
+        } else {
+            orderInfoLabel.setText("Order #" + currentOrder.getId() + " - Status: " + currentOrder.getStatus());
+            if (saveButton != null) {
+                saveButton.setText("Save Results");
+            }
+        }
 
         // Set patient info
         mrnLabel.setText(currentOrder.getPatient().getMrn());
@@ -239,6 +256,15 @@ public class ResultEntryController {
 
         // Load results
         resultsTable.setItems(FXCollections.observableArrayList(currentOrder.getResults()));
+
+        // Auto-focus the first result cell for immediate data entry
+        Platform.runLater(() -> {
+            if (!resultsTable.getItems().isEmpty()) {
+                resultsTable.getSelectionModel().select(0);
+                resultsTable.getFocusModel().focus(0, resultValueColumn);
+                resultsTable.edit(0, resultValueColumn);
+            }
+        });
     }
 
     private void autoCalculateStatus(LabResult result) {
@@ -281,25 +307,93 @@ public class ResultEntryController {
                     ? SessionManager.getCurrentUser().getUsername()
                     : "UNKNOWN";
 
+            // Check how many results are entered
+            int enteredCount = 0;
+            int totalCount = resultsTable.getItems().size();
+            for (LabResult result : resultsTable.getItems()) {
+                if (result.getResultValue() != null && !result.getResultValue().trim().isEmpty()) {
+                    enteredCount++;
+                }
+            }
+
+            if (enteredCount == 0) {
+                showError("No results to save. Please enter at least one result value.");
+                return;
+            }
+
+            // Check if this is an edit of a completed order (correction scenario)
+            boolean isEditingCompletedOrder = "COMPLETED".equals(currentOrder.getStatus());
+
             // Save all results with values
-            int savedCount = 0;
             for (LabResult result : resultsTable.getItems()) {
                 if (result.getResultValue() != null && !result.getResultValue().trim().isEmpty()) {
                     result.setPerformedBy(currentUser);
                     result.setPerformedAt(LocalDateTime.now());
                     resultRepository.save(result);
-                    savedCount++;
                 }
             }
 
-            if (savedCount > 0) {
-                showSuccess("Saved " + savedCount + " result(s) successfully!");
-            } else {
-                showError("No results to save. Please enter at least one result value.");
+            // If editing a completed order, just save and show success - no status change
+            // needed
+            if (isEditingCompletedOrder) {
+                showSuccess("Results corrected and saved successfully!");
+
+                // Close window after a short delay
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> handleClose());
+                        timer.cancel();
+                    }
+                }, 1500);
+                return;
             }
 
-            // Reload order to refresh data
-            loadOrderData();
+            // For pending orders: Check if all results are entered - if so, auto-complete
+            // If not all entered, ask user if they want to mark as completed anyway
+            boolean shouldComplete = false;
+
+            if (enteredCount == totalCount) {
+                // All results entered - auto-complete
+                shouldComplete = true;
+            } else {
+                // Not all results entered - ask user
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Incomplete Results");
+                alert.setHeaderText("Not all results have been entered");
+                alert.setContentText("Only " + enteredCount + " of " + totalCount +
+                        " tests have results. Do you want to mark this order as completed anyway?");
+
+                ButtonType completeBtn = new ButtonType("Mark Completed", ButtonBar.ButtonData.YES);
+                ButtonType saveOnlyBtn = new ButtonType("Save Only", ButtonBar.ButtonData.NO);
+                alert.getButtonTypes().setAll(completeBtn, saveOnlyBtn);
+
+                ButtonType response = alert.showAndWait().orElse(saveOnlyBtn);
+                shouldComplete = (response == completeBtn);
+            }
+
+            if (shouldComplete) {
+                // Mark order as completed using ResultService for proper transaction handling
+                System.out.println("[ResultEntryController] Auto-completing order after save");
+                currentOrder.setResults(new ArrayList<>(resultsTable.getItems()));
+                resultService.saveResultsFromForm(currentOrder);
+
+                showSuccess("Results saved and Order #" + currentOrder.getId() + " marked as COMPLETED!");
+
+                // Close window after a short delay
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> handleClose());
+                        timer.cancel();
+                    }
+                }, 1500);
+            } else {
+                showSuccess("Saved " + enteredCount + " result(s). Order remains pending.");
+                loadOrderData();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

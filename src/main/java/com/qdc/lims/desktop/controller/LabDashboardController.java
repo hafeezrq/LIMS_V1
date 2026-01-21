@@ -6,6 +6,9 @@ import com.qdc.lims.desktop.navigation.DashboardSwitchService;
 import com.qdc.lims.desktop.navigation.DashboardType;
 import com.qdc.lims.entity.User;
 import com.qdc.lims.repository.LabOrderRepository;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -13,6 +16,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +45,9 @@ public class LabDashboardController {
 
     @FXML
     private Button switchRoleButton;
+
+    // Auto-refresh timer for real-time count updates (every 10 seconds)
+    private Timeline autoRefreshTimeline;
 
     private final ApplicationContext springContext;
     private final DashboardNavigator navigator;
@@ -76,6 +83,60 @@ public class LabDashboardController {
             if (switchRoleButton != null) {
                 switchRoleButton.setVisible(false);
             }
+
+            // Start auto-refresh for real-time count updates
+            startAutoRefresh();
+        }
+    }
+
+    /**
+     * Starts automatic refresh of order counts every 10 seconds.
+     * This ensures the "Pending" and "Completed" counts update in real-time
+     * when Reception creates new orders or Lab Tech completes tests.
+     */
+    private void startAutoRefresh() {
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(10), event -> {
+            // Run database query in background thread to avoid UI freeze
+            new Thread(() -> {
+                try {
+                    // Pending = anything NOT completed and NOT cancelled (same logic as Reception)
+                    long newPendingCount = labOrderRepository.findAll().stream()
+                            .filter(order -> !"COMPLETED".equals(order.getStatus())
+                                    && !"CANCELLED".equals(order.getStatus()))
+                            .count();
+
+                    long newCompletedCount = labOrderRepository.findAll().stream()
+                            .filter(order -> "COMPLETED".equals(order.getStatus()))
+                            .count();
+
+                    // Update UI on JavaFX thread
+                    Platform.runLater(() -> {
+                        String currentPendingCount = pendingCountLabel.getText();
+                        String currentCompletedCount = completedCountLabel.getText();
+
+                        // Only update if counts have changed
+                        if (!String.valueOf(newPendingCount).equals(currentPendingCount) ||
+                                !String.valueOf(newCompletedCount).equals(currentCompletedCount)) {
+                            pendingCountLabel.setText(String.valueOf(newPendingCount));
+                            completedCountLabel.setText(String.valueOf(newCompletedCount));
+                        }
+                    });
+                } catch (Exception e) {
+                    System.err.println("Auto-refresh error: " + e.getMessage());
+                }
+            }).start();
+        }));
+        autoRefreshTimeline.setCycleCount(Animation.INDEFINITE);
+        autoRefreshTimeline.play();
+    }
+
+    /**
+     * Stops the auto-refresh timer. Should be called when navigating away from this
+     * dashboard.
+     */
+    public void stopAutoRefresh() {
+        if (autoRefreshTimeline != null) {
+            autoRefreshTimeline.stop();
         }
     }
 
@@ -84,13 +145,10 @@ public class LabDashboardController {
      */
     private void loadDashboardStats() {
         try {
-            // Count pending orders (not COMPLETED or CANCELLED)
-            // Implementation depends on repository methods available
-            // Assuming generic approach if specific count method not present
-            // For better performance, a custom query should be added to repository
-
+            // Pending = anything NOT completed and NOT cancelled (same logic as Reception)
             long pendingCount = labOrderRepository.findAll().stream()
-                    .filter(order -> "PENDING".equals(order.getStatus()) || "IN_PROGRESS".equals(order.getStatus()))
+                    .filter(order -> !"COMPLETED".equals(order.getStatus())
+                            && !"CANCELLED".equals(order.getStatus()))
                     .count();
 
             long completedCount = labOrderRepository.findAll().stream()
@@ -255,7 +313,23 @@ public class LabDashboardController {
 
     @FXML
     private void handleCompletedTests() {
-        showAlert("Feature", "Completed Tests feature will be implemented in the full version.");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/lab_worklist.fxml"));
+            loader.setControllerFactory(springContext::getBean);
+            Parent root = loader.load();
+
+            // Get controller and set it to show completed tests
+            LabWorklistController controller = loader.getController();
+            controller.setShowCompletedOnInit(true);
+
+            Stage stage = new Stage();
+            stage.setTitle("Lab Worklist - Completed Tests");
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to open completed tests: " + e.getMessage());
+        }
     }
 
     @FXML

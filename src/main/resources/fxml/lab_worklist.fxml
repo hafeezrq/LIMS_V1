@@ -75,12 +75,6 @@
             
             <!-- Action Buttons -->
             <HBox spacing="15" alignment="CENTER">
-                <Button text="Enter Results" onAction="#handleEnterResults" 
-                        style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5; -fx-font-weight: bold;"
-                        prefWidth="180"/>
-                <Button text="View Details" onAction="#handleViewDetails" 
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
-                        prefWidth="150"/>
                 <Button text="Close" onAction="#handleClose" 
                         style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
                         prefWidth="120"/>
