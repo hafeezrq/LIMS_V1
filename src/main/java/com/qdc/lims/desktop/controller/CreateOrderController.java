@@ -350,40 +350,101 @@ public class CreateOrderController {
         Label printLabel = new Label("Print Receipt:");
         printLabel.setStyle("-fx-font-weight: bold;");
 
-        javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(15);
+        javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10);
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-        Button printBtn = new Button("Print Receipt");
-        printBtn.setStyle(
-                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 12 25; -fx-cursor: hand;");
-        printBtn.setOnAction(e -> {
+        Button printNormalBtn = new Button("🖨 Normal Print");
+        printNormalBtn.setStyle(
+                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        printNormalBtn.setOnAction(e -> {
             printReceipt(order, "NORMAL");
+            dialog.close();
+            closeCreateOrderWindow();
+        });
+
+        Button printThermalBtn = new Button("🧾 Thermal Print");
+        printThermalBtn.setStyle(
+                "-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        printThermalBtn.setOnAction(e -> {
+            printReceipt(order, "THERMAL");
+            dialog.close();
+            closeCreateOrderWindow();
         });
 
         Button skipBtn = new Button("Skip Print");
         skipBtn.setStyle(
-                "-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 12 20; -fx-cursor: hand;");
-        skipBtn.setOnAction(e -> dialog.close());
+                "-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 12; -fx-padding: 10 15; -fx-cursor: hand;");
+        skipBtn.setOnAction(e -> {
+            dialog.close();
+            closeCreateOrderWindow();
+        });
 
-        buttonBox.getChildren().addAll(printBtn, skipBtn);
+        buttonBox.getChildren().addAll(printNormalBtn, printThermalBtn, skipBtn);
 
         content.getChildren().addAll(summaryBox, printLabel, buttonBox);
 
         dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
 
-        dialog.setOnCloseRequest(e -> {
-            handleClear();
-        });
+        // Hide the default close button since we have our own buttons
+        dialog.getDialogPane().lookupButton(ButtonType.CLOSE).setVisible(false);
 
         dialog.showAndWait();
     }
 
     /**
+     * Close the Create Order window after successful order creation.
+     */
+    private void closeCreateOrderWindow() {
+        Stage stage = (Stage) patientSearchField.getScene().getWindow();
+        stage.close();
+    }
+
+    /**
      * Print receipt using system print dialog.
+     * Supports both NORMAL (A4/Letter) and THERMAL (58mm/80mm) formats.
      */
     private void printReceipt(LabOrder order, String printerType) {
-        // Build receipt content
+        // Build receipt content based on printer type
+        String receiptText;
+        String fontStyle;
+
+        if ("THERMAL".equals(printerType)) {
+            receiptText = buildThermalReceipt(order);
+            fontStyle = "-fx-font-family: 'Courier New'; -fx-font-size: 9;";
+        } else {
+            receiptText = buildNormalReceipt(order);
+            fontStyle = "-fx-font-family: 'Courier New'; -fx-font-size: 11;";
+        }
+
+        // Create printable content
+        javafx.scene.text.TextFlow textFlow = new javafx.scene.text.TextFlow();
+        javafx.scene.text.Text text = new javafx.scene.text.Text(receiptText);
+        text.setStyle(fontStyle);
+        textFlow.getChildren().add(text);
+
+        // Set preferred width for thermal (narrow) vs normal (wider)
+        if ("THERMAL".equals(printerType)) {
+            textFlow.setPrefWidth(200); // ~58-80mm thermal paper width
+        }
+
+        // Use system print dialog
+        javafx.print.PrinterJob job = javafx.print.PrinterJob.createPrinterJob();
+        if (job != null && job.showPrintDialog(patientSearchField.getScene().getWindow())) {
+            boolean success = job.printPage(textFlow);
+            if (success) {
+                job.endJob();
+                showSuccess("Receipt sent to printer");
+            } else {
+                showError("Failed to print receipt");
+            }
+        }
+    }
+
+    /**
+     * Build receipt content for normal printers (A4/Letter size).
+     */
+    private String buildNormalReceipt(LabOrder order) {
         StringBuilder sb = new StringBuilder();
         sb.append("========== QDC LABORATORY ==========\n");
         sb.append("          RECEIPT / INVOICE\n");
@@ -416,23 +477,68 @@ public class CreateOrderController {
         sb.append("    Results typically ready in 24hrs\n");
         sb.append("=====================================\n");
 
-        // Create printable content
-        javafx.scene.text.TextFlow textFlow = new javafx.scene.text.TextFlow();
-        javafx.scene.text.Text text = new javafx.scene.text.Text(sb.toString());
-        text.setStyle("-fx-font-family: 'Courier New'; -fx-font-size: 11;");
-        textFlow.getChildren().add(text);
+        return sb.toString();
+    }
 
-        // Use system print dialog
-        javafx.print.PrinterJob job = javafx.print.PrinterJob.createPrinterJob();
-        if (job != null && job.showPrintDialog(patientSearchField.getScene().getWindow())) {
-            boolean success = job.printPage(textFlow);
-            if (success) {
-                job.endJob();
-                showSuccess("Receipt sent to printer");
-            } else {
-                showError("Failed to print receipt");
-            }
+    /**
+     * Build receipt content optimized for thermal printers (58mm/80mm paper).
+     * Compact format with shorter lines and condensed layout.
+     */
+    private String buildThermalReceipt(LabOrder order) {
+        StringBuilder sb = new StringBuilder();
+
+        // Header - centered, compact
+        sb.append("--------------------------------\n");
+        sb.append("       QDC LABORATORY\n");
+        sb.append("         CASH RECEIPT\n");
+        sb.append("--------------------------------\n");
+        sb.append("Rcpt#: ").append(order.getId()).append("\n");
+        sb.append("Date: ")
+                .append(order.getOrderDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")))
+                .append("\n");
+        sb.append("--------------------------------\n");
+
+        // Patient - abbreviated
+        sb.append("Patient: ").append(truncate(order.getPatient().getFullName(), 20)).append("\n");
+        sb.append("MRN: ").append(order.getPatient().getMrn()).append("\n");
+        sb.append("Age: ").append(order.getPatient().getAge())
+                .append(" | ").append(order.getPatient().getGender()).append("\n");
+        sb.append("--------------------------------\n");
+
+        // Tests - compact format
+        sb.append("TESTS:\n");
+        for (var result : order.getResults()) {
+            String testName = truncate(result.getTestDefinition().getTestName(), 18);
+            String price = df.format(result.getTestDefinition().getPrice());
+            sb.append(String.format("%-18s %8s\n", testName, price));
         }
+        sb.append("--------------------------------\n");
+
+        // Billing - right-aligned amounts
+        sb.append(String.format("%-12s Rs.%10s\n", "Total:", df.format(order.getTotalAmount())));
+        if (order.getDiscountAmount() != null && order.getDiscountAmount() > 0) {
+            sb.append(String.format("%-12s Rs.%10s\n", "Discount:", df.format(order.getDiscountAmount())));
+        }
+        sb.append(String.format("%-12s Rs.%10s\n", "Paid:", df.format(order.getPaidAmount())));
+        sb.append(String.format("%-12s Rs.%10s\n", "Balance:", df.format(order.getBalanceDue())));
+        sb.append("--------------------------------\n");
+
+        // Footer - compact
+        sb.append("   Thank you for choosing QDC!\n");
+        sb.append("  Results ready in 24 hours\n");
+        sb.append("--------------------------------\n");
+        sb.append("\n\n"); // Extra space for tear-off
+
+        return sb.toString();
+    }
+
+    /**
+     * Truncate string to specified length for thermal receipt formatting.
+     */
+    private String truncate(String str, int maxLength) {
+        if (str == null)
+            return "";
+        return str.length() <= maxLength ? str : str.substring(0, maxLength - 2) + "..";
     }
 
     @FXML

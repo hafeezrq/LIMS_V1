@@ -7,6 +7,9 @@ import com.qdc.lims.entity.LabOrder;
 import com.qdc.lims.entity.LabResult;
 import com.qdc.lims.entity.Patient;
 import com.qdc.lims.repository.LabOrderRepository;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -35,6 +38,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javafx.util.Duration;
 
 /**
  * Controller for the Reception Dashboard.
@@ -53,6 +57,9 @@ public class ReceptionDashboardController {
     private final LabOrderRepository labOrderRepository;
     private final DashboardSwitchService dashboardSwitchService;
     private final DecimalFormat df = new DecimalFormat("#,##0.00");
+
+    // Auto-refresh timer for real-time count updates (every 10 seconds)
+    private Timeline autoRefreshTimeline;
 
     // FXML Components - Header
     @FXML
@@ -159,6 +166,70 @@ public class ReceptionDashboardController {
                 handleDeliverReport();
             }
         });
+
+        // Start auto-refresh for real-time count updates
+        startAutoRefresh();
+    }
+
+    /**
+     * Starts automatic refresh of order counts every 10 seconds.
+     * This ensures the "Ready to Pickup" and "Pending" counts update in real-time
+     * when Lab Tech completes tests or Reception creates new orders.
+     */
+    private void startAutoRefresh() {
+        autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(10), event -> {
+            // Run database query in background thread to avoid UI freeze
+            new Thread(() -> {
+                try {
+                    LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+                    LocalDateTime endDate = LocalDateTime.now().plusDays(1);
+
+                    List<LabOrder> allOrders = labOrderRepository.findByOrderDateBetween(startDate, endDate);
+
+                    // Calculate new counts
+                    long newReadyCount = allOrders.stream()
+                            .filter(o -> "COMPLETED".equals(o.getStatus()) && !o.isReportDelivered())
+                            .count();
+
+                    long newPendingCount = allOrders.stream()
+                            .filter(o -> !"COMPLETED".equals(o.getStatus()) && !"CANCELLED".equals(o.getStatus()))
+                            .count();
+
+                    // Update UI on JavaFX thread
+                    Platform.runLater(() -> {
+                        String currentReadyCount = readyCountLabel.getText();
+                        String currentPendingCount = pendingCountLabel.getText();
+
+                        // Only update if counts have changed (to avoid unnecessary UI updates)
+                        if (!String.valueOf(newReadyCount).equals(currentReadyCount) ||
+                                !String.valueOf(newPendingCount).equals(currentPendingCount)) {
+
+                            // Update the counts
+                            readyCountLabel.setText(String.valueOf(newReadyCount));
+                            pendingCountLabel.setText(String.valueOf(newPendingCount));
+
+                            // Also reload the full order lists so tables stay in sync
+                            loadOrders();
+                        }
+                    });
+                } catch (Exception e) {
+                    // Silently ignore errors during auto-refresh to not disturb the user
+                    System.err.println("Auto-refresh error: " + e.getMessage());
+                }
+            }).start();
+        }));
+        autoRefreshTimeline.setCycleCount(Animation.INDEFINITE);
+        autoRefreshTimeline.play();
+    }
+
+    /**
+     * Stops the auto-refresh timer. Should be called when navigating away from this
+     * dashboard.
+     */
+    public void stopAutoRefresh() {
+        if (autoRefreshTimeline != null) {
+            autoRefreshTimeline.stop();
+        }
     }
 
     private void startClock() {
@@ -316,12 +387,12 @@ public class ReceptionDashboardController {
 
     @FXML
     private void handleRegisterPatient() {
-        openWindow("/fxml/patient_registration.fxml", "Patient Registration", 600, 500);
+        openWindow("/fxml/patient_registration.fxml", "Patient Registration", 550, 620);
     }
 
     @FXML
     private void handleCreateOrder() {
-        openWindow("/fxml/create_order.fxml", "Create Lab Order", 1000, 750);
+        openWindow("/fxml/create_order.fxml", "Create Lab Order", 900, 800);
     }
 
     @FXML
@@ -708,6 +779,9 @@ public class ReceptionDashboardController {
             return; // Already on Reception dashboard
         }
 
+        // Stop auto-refresh timer before switching dashboards
+        stopAutoRefresh();
+
         Stage stage = (Stage) mainContainer.getScene().getWindow();
         dashboardSwitchService.switchToDashboard(selected, stage);
     }
@@ -722,6 +796,9 @@ public class ReceptionDashboardController {
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
+                    // Stop auto-refresh timer before logout
+                    stopAutoRefresh();
+
                     Stage stage = (Stage) mainContainer.getScene().getWindow();
                     // Clear session
                     SessionManager.logout(stage);

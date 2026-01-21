@@ -6,27 +6,26 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.qdc.lims.desktop.controller.PatientRegistrationController"
-            prefWidth="900" prefHeight="700">
+            prefWidth="550" prefHeight="620">
     
     <!-- Header -->
     <top>
-        <VBox style="-fx-background-color: #3498db; -fx-padding: 20;">
-            <Label text="Patient Registration" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: white;"/>
-            <Label text="Register a new patient in the system" style="-fx-font-size: 12; -fx-text-fill: #ecf0f1;"/>
+        <VBox style="-fx-background-color: #3498db; -fx-padding: 15;">
+            <Label text="Patient Registration" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Register a new patient in the system" style="-fx-font-size: 11; -fx-text-fill: #ecf0f1;"/>
         </VBox>
     </top>
     
     <!-- Main Form -->
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
-            <VBox spacing="20" style="-fx-background-color: #f5f5f5; -fx-padding: 30;">
+        <VBox spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;">
                 
                 <!-- Personal Information Section -->
-                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
-                    <Label text="Personal Information" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                    <Label text="Personal Information" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
                     <Separator/>
                     
-                    <GridPane hgap="15" vgap="15">
+                    <GridPane hgap="15" vgap="10">
                         <!-- Full Name -->
                         <Label text="Full Name *" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
                         <TextField fx:id="fullNameField" promptText="Enter full name" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
@@ -58,11 +57,11 @@
                 </VBox>
                 
                 <!-- Contact Information Section -->
-                <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 10;">
-                    <Label text="Contact Information" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                    <Label text="Contact Information" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
                     <Separator/>
                     
-                    <GridPane hgap="15" vgap="15">
+                    <GridPane hgap="15" vgap="10">
                         <!-- Mobile Number -->
                         <Label text="Mobile Number" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
                         <TextField fx:id="mobileField" promptText="03xx-xxxxxxx" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
@@ -84,17 +83,16 @@
                 <!-- Buttons -->
                 <HBox spacing="15" alignment="CENTER">
                     <Button text="Register Patient" onAction="#handleRegister" 
-                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5; -fx-font-weight: bold;"
-                            prefWidth="180"/>
+                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 25; -fx-background-radius: 5; -fx-font-weight: bold;"
+                            prefWidth="160"/>
                     <Button text="Clear Form" onAction="#handleClear" 
-                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
-                            prefWidth="150"/>
-                    <Button text="Close" onAction="#handleClose" 
-                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14; -fx-padding: 12 30; -fx-background-radius: 5;"
+                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
                             prefWidth="120"/>
+                    <Button text="Close" onAction="#handleClose" 
+                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 13; -fx-padding: 10 20; -fx-background-radius: 5;"
+                            prefWidth="100"/>
                 </HBox>
             </VBox>
-        </ScrollPane>
     </center>
     
 </BorderPane>

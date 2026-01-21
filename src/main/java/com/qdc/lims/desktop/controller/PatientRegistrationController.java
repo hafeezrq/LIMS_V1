@@ -233,7 +233,7 @@ public class PatientRegistrationController {
 
             Stage stage = new Stage();
             stage.setTitle("Create Lab Order");
-            stage.setScene(new Scene(root));
+            stage.setScene(new Scene(root, 900, 800));
             stage.show();
 
             // Close this registration window
