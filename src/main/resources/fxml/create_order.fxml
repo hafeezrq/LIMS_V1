@@ -19,7 +19,7 @@
     
     <!-- Main Content -->
     <center>
-        <VBox spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;">
+        <VBox spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;" VBox.vgrow="ALWAYS">
                 
                 <!-- Patient Selection -->
                 <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
@@ -51,13 +51,17 @@
                     </HBox>
                 </VBox>
                 
-                <!-- Test Selection -->
-                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                <!-- Test Selection with Category Tabs -->
+                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;" VBox.vgrow="ALWAYS">
                     <Label text="3. Select Tests" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
                     <Separator/>
                     
-                    <ListView fx:id="testsListView" prefHeight="200" 
-                              style="-fx-border-color: #bdc3c7; -fx-border-radius: 5;"/>
+                    <!-- Category TabPane -->
+                    <TabPane fx:id="categoryTabPane" tabClosingPolicy="UNAVAILABLE" 
+                             style="-fx-background-color: #f8f9fa;"
+                             VBox.vgrow="ALWAYS" prefHeight="280">
+                        <!-- Tabs will be dynamically populated from categories -->
+                    </TabPane>
                     
                     <HBox spacing="15" alignment="CENTER_LEFT">
                         <Label text="Selected Tests:" style="-fx-font-weight: bold;"/>

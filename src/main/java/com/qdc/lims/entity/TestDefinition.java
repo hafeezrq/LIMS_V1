@@ -21,6 +21,8 @@ public class TestDefinition {
 
     private String shortCode;
 
+    private String category; // Test category for grouping (e.g., Hematology, Biochemistry)
+
     private Double price;
 
     private String unit;

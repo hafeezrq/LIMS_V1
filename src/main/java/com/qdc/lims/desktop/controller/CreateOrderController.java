@@ -12,18 +12,21 @@ import com.qdc.lims.service.OrderService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.springframework.stereotype.Component;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * JavaFX controller for creating lab orders.
+ * Supports category-based test selection with checkboxes.
  */
 @Component("createOrderController")
 public class CreateOrderController {
@@ -44,7 +47,7 @@ public class CreateOrderController {
     private ComboBox<Doctor> doctorComboBox;
 
     @FXML
-    private ListView<TestDefinition> testsListView;
+    private TabPane categoryTabPane;
 
     @FXML
     private Label selectedTestsCountLabel;
@@ -72,6 +75,10 @@ public class CreateOrderController {
     private Patient selectedPatient;
     private final DecimalFormat df = new DecimalFormat("#,##0.00");
 
+    // Map to track selected tests across all categories
+    private final Map<Long, CheckBox> testCheckboxMap = new HashMap<>();
+    private final Set<TestDefinition> selectedTests = new HashSet<>();
+
     public CreateOrderController(PatientRepository patientRepository,
             DoctorRepository doctorRepository,
             TestDefinitionRepository testRepository,
@@ -87,8 +94,8 @@ public class CreateOrderController {
         // Load doctors
         loadDoctors();
 
-        // Load tests with checkboxes
-        loadTests();
+        // Load tests into category tabs
+        loadTestsIntoCategoryTabs();
 
         // Add listeners for billing calculation
         discountField.textProperty().addListener((obs, old, newVal) -> calculateBalance());
@@ -149,30 +156,95 @@ public class CreateOrderController {
         });
     }
 
-    private void loadTests() {
-        List<TestDefinition> tests = testRepository.findAll();
-        ObservableList<TestDefinition> observableTests = FXCollections.observableArrayList(tests);
+    /**
+     * Load tests into category tabs with checkboxes.
+     * Each category gets its own tab with a scrollable list of test checkboxes.
+     */
+    private void loadTestsIntoCategoryTabs() {
+        List<TestDefinition> allTests = testRepository.findAll().stream()
+                .filter(TestDefinition::isActive)
+                .sorted(Comparator.comparing(TestDefinition::getTestName))
+                .collect(Collectors.toList());
 
-        testsListView.setItems(observableTests);
-        testsListView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        // Group tests by category
+        Map<String, List<TestDefinition>> testsByCategory = allTests.stream()
+                .collect(Collectors.groupingBy(
+                        test -> test.getCategory() != null ? test.getCategory() : "Other",
+                        LinkedHashMap::new,
+                        Collectors.toList()));
 
-        // Format list cells
-        testsListView.setCellFactory(lv -> new ListCell<TestDefinition>() {
-            @Override
-            protected void updateItem(TestDefinition item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getTestName() + " - Rs. " + df.format(item.getPrice()));
-                }
+        // Define a preferred order for categories
+        List<String> categoryOrder = Arrays.asList(
+                "Hematology", "Biochemistry", "Serology", "Thyroid",
+                "Hormones", "Cardiac", "Urine", "Special Tests", "Other");
+
+        // Sort categories in preferred order
+        List<String> sortedCategories = new ArrayList<>();
+        for (String cat : categoryOrder) {
+            if (testsByCategory.containsKey(cat)) {
+                sortedCategories.add(cat);
             }
-        });
+        }
+        // Add any remaining categories not in the preferred order
+        for (String cat : testsByCategory.keySet()) {
+            if (!sortedCategories.contains(cat)) {
+                sortedCategories.add(cat);
+            }
+        }
 
-        // Selection listener
-        testsListView.getSelectionModel().selectedItemProperty().addListener((obs, old, newVal) -> {
-            updateTotalAmount();
-        });
+        // Clear existing tabs
+        categoryTabPane.getTabs().clear();
+        testCheckboxMap.clear();
+        selectedTests.clear();
+
+        // Create a tab for each category
+        for (String category : sortedCategories) {
+            List<TestDefinition> testsInCategory = testsByCategory.get(category);
+
+            Tab tab = new Tab(category + " (" + testsInCategory.size() + ")");
+            tab.setClosable(false);
+
+            // Create a FlowPane for checkbox layout (wraps nicely)
+            FlowPane flowPane = new FlowPane();
+            flowPane.setHgap(15);
+            flowPane.setVgap(8);
+            flowPane.setPadding(new Insets(15));
+            flowPane.setStyle("-fx-background-color: white;");
+
+            // Create checkboxes for each test
+            for (TestDefinition test : testsInCategory) {
+                CheckBox checkBox = new CheckBox(test.getTestName());
+                checkBox.setStyle("-fx-font-size: 12; -fx-cursor: hand;");
+                checkBox.setMinWidth(200);
+                checkBox.setMaxWidth(280);
+
+                // Add listener to update selection
+                checkBox.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
+                    if (isSelected) {
+                        selectedTests.add(test);
+                    } else {
+                        selectedTests.remove(test);
+                    }
+                    updateTotalAmount();
+                });
+
+                // Add tooltip with test code
+                if (test.getShortCode() != null && !test.getShortCode().isEmpty()) {
+                    checkBox.setTooltip(new Tooltip("Code: " + test.getShortCode()));
+                }
+
+                testCheckboxMap.put(test.getId(), checkBox);
+                flowPane.getChildren().add(checkBox);
+            }
+
+            // Wrap in ScrollPane for scrollability
+            ScrollPane scrollPane = new ScrollPane(flowPane);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setStyle("-fx-background-color: white; -fx-background: white;");
+
+            tab.setContent(scrollPane);
+            categoryTabPane.getTabs().add(tab);
+        }
     }
 
     @FXML
@@ -231,8 +303,6 @@ public class CreateOrderController {
     }
 
     private void updateTotalAmount() {
-        ObservableList<TestDefinition> selectedTests = testsListView.getSelectionModel().getSelectedItems();
-
         double total = 0.0;
         for (TestDefinition test : selectedTests) {
             total += test.getPrice();
@@ -245,8 +315,6 @@ public class CreateOrderController {
     }
 
     private void calculateBalance() {
-        ObservableList<TestDefinition> selectedTests = testsListView.getSelectionModel().getSelectedItems();
-
         double total = 0.0;
         for (TestDefinition test : selectedTests) {
             total += test.getPrice();
@@ -277,7 +345,6 @@ public class CreateOrderController {
             return;
         }
 
-        ObservableList<TestDefinition> selectedTests = testsListView.getSelectionModel().getSelectedItems();
         if (selectedTests.isEmpty()) {
             showError("Please select at least one test");
             return;
@@ -549,7 +616,12 @@ public class CreateOrderController {
         selectedPatient = null;
 
         doctorComboBox.getSelectionModel().selectFirst();
-        testsListView.getSelectionModel().clearSelection();
+
+        // Clear all test checkboxes
+        for (CheckBox checkBox : testCheckboxMap.values()) {
+            checkBox.setSelected(false);
+        }
+        selectedTests.clear();
 
         discountField.setText("0");
         cashPaidField.setText("0");
