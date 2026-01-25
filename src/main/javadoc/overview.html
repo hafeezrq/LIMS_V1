@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>QDC LIMS Overview</title>
+</head>
+<body>
+  <h1>QDC LIMS System Overview</h1>
+
+  <p>
+    QDC LIMS is a desktop-first Laboratory Information Management System built on
+    Spring Boot, Spring Data JPA, and JavaFX. It manages patient registration,
+    lab orders, result entry, reporting, inventory consumption, and financial
+    operations in a single application.
+  </p>
+
+  <h2>System Map</h2>
+  <ul>
+    <li><strong>Root</strong>: <a href="com/qdc/lims/package-summary.html">com.qdc.lims</a></li>
+    <li><strong>Configuration</strong>: <a href="com/qdc/lims/config/package-summary.html">com.qdc.lims.config</a></li>
+    <li><strong>Domain Entities</strong>: <a href="com/qdc/lims/entity/package-summary.html">com.qdc.lims.entity</a></li>
+    <li><strong>Repositories</strong>: <a href="com/qdc/lims/repository/package-summary.html">com.qdc.lims.repository</a></li>
+    <li><strong>Services</strong>: <a href="com/qdc/lims/service/package-summary.html">com.qdc.lims.service</a></li>
+    <li><strong>UI Root</strong>: <a href="com/qdc/lims/ui/package-summary.html">com.qdc.lims.ui</a></li>
+    <li><strong>UI Controllers</strong>: <a href="com/qdc/lims/ui/controller/package-summary.html">com.qdc.lims.ui.controller</a></li>
+    <li><strong>Navigation</strong>: <a href="com/qdc/lims/ui/navigation/package-summary.html">com.qdc.lims.ui.navigation</a></li>
+    <li><strong>Sessions</strong>: <a href="com/qdc/lims/ui/session/package-summary.html">com.qdc.lims.ui.session</a></li>
+    <li><strong>UI Utilities</strong>: <a href="com/qdc/lims/ui/util/package-summary.html">com.qdc.lims.ui.util</a></li>
+    <li><strong>General Utilities</strong>: <a href="com/qdc/lims/util/package-summary.html">com.qdc.lims.util</a></li>
+  </ul>
+
+  <h2>Architecture At A Glance</h2>
+  <ul>
+    <li><strong>UI layer</strong>: JavaFX controllers under <code>com.qdc.lims.ui</code>.</li>
+    <li><strong>Service layer</strong>: Business logic under <code>com.qdc.lims.service</code>.</li>
+    <li><strong>Persistence layer</strong>: JPA entities under <code>com.qdc.lims.entity</code> and repositories under <code>com.qdc.lims.repository</code>.</li>
+    <li><strong>Configuration/utilities</strong>: Supporting code under <code>com.qdc.lims.config</code> and <code>com.qdc.lims.util</code>.</li>
+  </ul>
+
+  <h2>Core Functional Areas</h2>
+  <ul>
+    <li><strong>Patients and Orders</strong>: Patient registration, lab orders, and result workflows.</li>
+    <li><strong>Test Catalog</strong>: Test definitions, departments (categories), panels, and reference ranges.</li>
+    <li><strong>Reporting</strong>: PDF report generation and export helpers.</li>
+    <li><strong>Inventory</strong>: Inventory items, consumption recipes, purchases, and supplier ledgers.</li>
+    <li><strong>Finance</strong>: Payments, commissions, and financial summaries.</li>
+    <li><strong>Security and Sessioning</strong>: User authentication, password policy, and session/window management.</li>
+  </ul>
+
+  <h2>Suggested Reading Order</h2>
+  <ol>
+    <li>Application entry points: <code>com.qdc.lims.DesktopApplication</code> and <code>com.qdc.lims.QdcLimsApplication</code>.</li>
+    <li>Domain model: packages under <code>com.qdc.lims.entity</code>.</li>
+    <li>Business logic: packages under <code>com.qdc.lims.service</code>.</li>
+    <li>UI flows: controllers under <code>com.qdc.lims.ui.controller</code>.</li>
+  </ol>
+</body>
+</html>

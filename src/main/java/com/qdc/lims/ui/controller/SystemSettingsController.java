@@ -10,6 +10,10 @@ import org.springframework.stereotype.Controller;
 
 import java.io.File;
 
+/**
+ * Controller for the system settings screen backed by {@link ConfigService}
+ * key-value configuration entries.
+ */
 @Controller
 public class SystemSettingsController {
 
@@ -43,13 +47,18 @@ public class SystemSettingsController {
     @FXML
     private Label statusLabel;
 
+    /**
+     * Loads persisted settings into the form.
+     */
     @FXML
     public void initialize() {
         loadSettings();
     }
 
+    /**
+     * Refreshes configuration cache and hydrates all UI fields.
+     */
     private void loadSettings() {
-        // Refresh cache to ensure latest data
         configService.refreshCache();
 
         clinicNameField.setText(configService.get("CLINIC_NAME"));
@@ -67,6 +76,9 @@ public class SystemSettingsController {
         statusLabel.setText("Settings loaded.");
     }
 
+    /**
+     * Persists the edited settings back to the configuration store.
+     */
     @FXML
     private void handleSave() {
         try {
@@ -102,6 +114,9 @@ public class SystemSettingsController {
         }
     }
 
+    /**
+     * Lets the user browse for a report logo file and stores its path.
+     */
     @FXML
     private void handleBrowseLogo() {
         FileChooser fileChooser = new FileChooser();
@@ -115,6 +130,9 @@ public class SystemSettingsController {
         }
     }
 
+    /**
+     * Closes the settings window.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) clinicNameField.getScene().getWindow();

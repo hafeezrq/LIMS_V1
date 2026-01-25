@@ -1,0 +1,13 @@
+com.qdc.lims
+com.qdc.lims.config
+com.qdc.lims.dto
+com.qdc.lims.entity
+com.qdc.lims.repository
+com.qdc.lims.service
+com.qdc.lims.ui
+com.qdc.lims.ui.backup
+com.qdc.lims.ui.controller
+com.qdc.lims.ui.navigation
+com.qdc.lims.ui.session
+com.qdc.lims.ui.util
+com.qdc.lims.util

@@ -14,6 +14,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Controller for recording operational expenses and querying them over a date
+ * range.
+ */
 @Component
 public class ExpenseController {
 
@@ -55,12 +59,14 @@ public class ExpenseController {
     @FXML
     private TableColumn<Payment, String> amountCol;
 
+    /**
+     * Initializes defaults and loads the initial expense view.
+     */
     @FXML
     public void initialize() {
         setupTable();
         setupForm();
 
-        // Defaults
         filterStartDate.setValue(LocalDate.now().withDayOfMonth(1));
         filterEndDate.setValue(LocalDate.now());
 
@@ -89,6 +95,9 @@ public class ExpenseController {
                 data -> new SimpleStringProperty(String.format("%.2f", data.getValue().getAmount())));
     }
 
+    /**
+     * Validates and saves a new expense entry.
+     */
     @FXML
     private void handleAddExpense() {
         try {
@@ -109,11 +118,9 @@ public class ExpenseController {
 
             paymentRepository.save(payment);
 
-            // Clear form
             descriptionField.clear();
             amountField.clear();
 
-            // Refresh
             handleSearch();
 
         } catch (NumberFormatException e) {
@@ -124,6 +131,9 @@ public class ExpenseController {
         }
     }
 
+    /**
+     * Queries expenses for the selected date range and updates totals.
+     */
     @FXML
     private void handleSearch() {
         LocalDate start = filterStartDate.getValue();
@@ -140,6 +150,9 @@ public class ExpenseController {
         }
     }
 
+    /**
+     * Closes the expense window.
+     */
     @FXML
     private void handleClose() {
         ((Stage) closeButton.getScene().getWindow()).close();

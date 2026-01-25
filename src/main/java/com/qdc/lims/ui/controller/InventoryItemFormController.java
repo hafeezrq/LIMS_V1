@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Form controller for creating and editing {@link InventoryItem} records.
+ */
 @Component
 @Scope("prototype")
 public class InventoryItemFormController {
@@ -41,23 +44,27 @@ public class InventoryItemFormController {
     private InventoryItem item;
     private Runnable onSaveCallback;
 
+    /**
+     * Creates the form controller.
+     */
     public InventoryItemFormController(InventoryItemRepository inventoryRepository,
             SupplierRepository supplierRepository) {
         this.inventoryRepository = inventoryRepository;
         this.supplierRepository = supplierRepository;
     }
 
+    /**
+     * Loads reference data such as units and suppliers.
+     */
     @FXML
     public void initialize() {
-        // Load Common Units
         unitComboBox.setItems(FXCollections.observableArrayList(
                 "pcs", "ml", "liters", "units", "boxes", "tests", "strips"));
 
-        // Load Suppliers
         List<Supplier> suppliers = supplierRepository.findAll();
         supplierComboBox.setItems(FXCollections.observableArrayList(suppliers));
 
-        supplierComboBox.setConverter(new StringConverter<Supplier>() {
+        supplierComboBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(Supplier s) {
                 return s == null ? null : s.getCompanyName();
@@ -65,11 +72,16 @@ public class InventoryItemFormController {
 
             @Override
             public Supplier fromString(String string) {
-                return null; // Not needed
+                return null;
             }
         });
     }
 
+    /**
+     * Sets the item to edit (or creates a new one) and updates the form title.
+     *
+     * @param existingItem item to edit, or {@code null} for a new item
+     */
     public void setInventoryItem(InventoryItem existingItem) {
         this.item = existingItem;
         if (item != null) {
@@ -81,6 +93,9 @@ public class InventoryItemFormController {
         }
     }
 
+    /**
+     * Registers a callback invoked after a successful save.
+     */
     public void setOnSaveCallback(Runnable callback) {
         this.onSaveCallback = callback;
     }
@@ -95,10 +110,14 @@ public class InventoryItemFormController {
         activeCheckBox.setSelected(item.isActive());
     }
 
+    /**
+     * Validates form input, persists the item, and closes the dialog.
+     */
     @FXML
     private void handleSave() {
-        if (!validateInput())
+        if (!validateInput()) {
             return;
+        }
 
         item.setItemName(itemNameField.getText().trim());
         item.setUnit(unitComboBox.getValue());
@@ -113,15 +132,19 @@ public class InventoryItemFormController {
 
         try {
             inventoryRepository.save(item);
-            if (onSaveCallback != null)
+            if (onSaveCallback != null) {
                 onSaveCallback.run();
-            handleCancel(); // Close window
+            }
+            handleCancel();
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "Could not save item: " + e.getMessage());
             alert.showAndWait();
         }
     }
 
+    /**
+     * Performs basic validation on required fields and numeric inputs.
+     */
     private boolean validateInput() {
         if (itemNameField.getText().trim().isEmpty()) {
             showAlert("Item Name is required.");
@@ -154,6 +177,9 @@ public class InventoryItemFormController {
         alert.showAndWait();
     }
 
+    /**
+     * Closes the form window without saving.
+     */
     @FXML
     private void handleCancel() {
         Stage stage = (Stage) itemNameField.getScene().getWindow();

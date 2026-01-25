@@ -13,6 +13,10 @@ import org.springframework.stereotype.Controller;
 
 import java.util.Optional;
 
+/**
+ * Controller for managing {@link Department} records (labeled as categories in
+ * parts of the UI).
+ */
 @Controller
 public class CategoryManagementController {
 
@@ -31,24 +35,35 @@ public class CategoryManagementController {
     private final DepartmentRepository departmentRepository;
     private final ObservableList<Department> categoryList = FXCollections.observableArrayList();
 
-    // Callback to refresh parent controller's combo box
     private Runnable onUpdateCallback;
 
+    /**
+     * Creates the controller.
+     *
+     * @param departmentRepository department repository
+     */
     @Autowired
     public CategoryManagementController(DepartmentRepository departmentRepository) {
         this.departmentRepository = departmentRepository;
     }
 
+    /**
+     * Initializes the table and selection behavior.
+     */
     @FXML
     public void initialize() {
         setupTable();
         loadCategories();
 
-        // Add selection listener
         categoryTable.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldVal, newVal) -> showDetails(newVal));
     }
 
+    /**
+     * Registers a callback invoked after successful create/update/delete.
+     *
+     * @param onUpdateCallback callback to run
+     */
     public void setOnUpdateCallback(Runnable onUpdateCallback) {
         this.onUpdateCallback = onUpdateCallback;
     }
@@ -74,6 +89,9 @@ public class CategoryManagementController {
         }
     }
 
+    /**
+     * Saves a new or existing department with duplicate-name protection.
+     */
     @FXML
     private void handleSave() {
         String name = nameField.getText();
@@ -85,7 +103,6 @@ public class CategoryManagementController {
         try {
             Department category = categoryTable.getSelectionModel().getSelectedItem();
             if (category == null) {
-                // Check for duplicate name for new items
                 Optional<Department> existing = departmentRepository.findByName(name.trim());
                 if (existing.isPresent()) {
                     showAlert("Error", "Department with this name already exists.");
@@ -93,7 +110,6 @@ public class CategoryManagementController {
                 }
                 category = new Department();
             } else {
-                // If editing, check if name changed and if it conflicts
                 if (!category.getName().equals(name.trim())) {
                     Optional<Department> existing = departmentRepository.findByName(name.trim());
                     if (existing.isPresent()) {
@@ -120,6 +136,9 @@ public class CategoryManagementController {
         }
     }
 
+    /**
+     * Deletes the selected department after confirmation.
+     */
     @FXML
     private void handleDelete() {
         Department selected = categoryTable.getSelectionModel().getSelectedItem();
@@ -148,6 +167,9 @@ public class CategoryManagementController {
         }
     }
 
+    /**
+     * Clears the form and table selection.
+     */
     @FXML
     private void handleClear() {
         nameField.clear();
@@ -155,6 +177,9 @@ public class CategoryManagementController {
         categoryTable.getSelectionModel().clearSelection();
     }
 
+    /**
+     * Closes the window.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) nameField.getScene().getWindow();

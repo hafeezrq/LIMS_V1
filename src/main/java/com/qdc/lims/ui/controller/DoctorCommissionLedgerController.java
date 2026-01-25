@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller that summarizes doctor commissions over a date range and exposes
+ * aggregate paid/due totals.
+ */
 @Component
 public class DoctorCommissionLedgerController {
 
@@ -49,6 +53,9 @@ public class DoctorCommissionLedgerController {
     @FXML
     private Button closeButton;
 
+    /**
+     * Initializes date defaults and loads the initial summary.
+     */
     @FXML
     public void initialize() {
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
@@ -66,6 +73,9 @@ public class DoctorCommissionLedgerController {
         dueCol.setCellValueFactory(data -> new SimpleStringProperty(formatAmount(data.getValue().dueTotal)));
     }
 
+    /**
+     * Recomputes the commission summary for the selected date range and filter.
+     */
     @FXML
     private void handleGenerate() {
         LocalDate start = startDatePicker.getValue();
@@ -140,6 +150,9 @@ public class DoctorCommissionLedgerController {
         totalCommissionLabel.setText(formatAmount(totalCommission));
     }
 
+    /**
+     * Closes the window.
+     */
     @FXML
     private void handleClose() {
         ((Stage) closeButton.getScene().getWindow()).close();
@@ -164,6 +177,9 @@ public class DoctorCommissionLedgerController {
         return getBillAmount(commission) * (rate / 100.0);
     }
 
+    /**
+     * Immutable table row for doctor commission aggregates.
+     */
     public static class DoctorCommissionSummary {
         private final String doctorName;
         private final double totalBill;
@@ -171,6 +187,9 @@ public class DoctorCommissionLedgerController {
         private final double paidTotal;
         private final double dueTotal;
 
+        /**
+         * Creates a commission summary row.
+         */
         public DoctorCommissionSummary(String doctorName, double totalBill, double commissionTotal, double paidTotal,
                 double dueTotal) {
             this.doctorName = doctorName;

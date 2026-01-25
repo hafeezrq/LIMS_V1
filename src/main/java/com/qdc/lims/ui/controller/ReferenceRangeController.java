@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+/**
+ * Controller for managing gender and age-specific {@link ReferenceRange}
+ * entries for a selected {@link TestDefinition}.
+ */
 @Component
 public class ReferenceRangeController {
 
@@ -57,14 +61,22 @@ public class ReferenceRangeController {
     private Button deleteButton;
 
     private TestDefinition currentTest;
-    private ObservableList<ReferenceRange> rangesList = FXCollections.observableArrayList();
+    private final ObservableList<ReferenceRange> rangesList = FXCollections.observableArrayList();
 
+    /**
+     * Initializes table bindings and form restrictions.
+     */
     @FXML
     public void initialize() {
         setupTable();
         setupForm();
     }
 
+    /**
+     * Sets the current test and loads its reference ranges.
+     *
+     * @param test selected test definition
+     */
     public void setTestDefinition(TestDefinition test) {
         this.currentTest = test;
         testNameLabel.setText("Reference Ranges for: " + test.getTestName());
@@ -95,7 +107,6 @@ public class ReferenceRangeController {
         genderCombo.getItems().addAll("Both", "Male", "Female");
         genderCombo.setValue("Both");
 
-        // Force numeric input for age fields
         setupNumericField(minAgeField);
         setupNumericField(maxAgeField);
         setupDecimalField(minValField);
@@ -122,6 +133,9 @@ public class ReferenceRangeController {
         refreshData();
     }
 
+    /**
+     * Reloads reference ranges from the repository for the current test.
+     */
     public void refreshData() {
         rangesList.clear();
         if (currentTest != null && currentTest.getId() != null) {
@@ -129,12 +143,15 @@ public class ReferenceRangeController {
         }
     }
 
+    /**
+     * Validates and saves a new reference range entry.
+     */
     @FXML
     private void handleAdd() {
-        if (currentTest == null)
+        if (currentTest == null) {
             return;
+        }
 
-        // Validation
         if (minAgeField.getText().isEmpty() || maxAgeField.getText().isEmpty() ||
                 minValField.getText().isEmpty() || maxValField.getText().isEmpty()) {
             showAlert("Validation Error", "All fields are required.");
@@ -173,11 +190,15 @@ public class ReferenceRangeController {
         }
     }
 
+    /**
+     * Deletes the selected range after confirmation.
+     */
     @FXML
     private void handleDelete() {
         ReferenceRange selected = rangesTable.getSelectionModel().getSelectedItem();
-        if (selected == null)
+        if (selected == null) {
             return;
+        }
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Delete Range");
@@ -191,6 +212,9 @@ public class ReferenceRangeController {
         }
     }
 
+    /**
+     * Closes the reference range window.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) rangesTable.getScene().getWindow();

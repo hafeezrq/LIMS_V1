@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller that summarizes supplier bills, payments, and outstanding dues over
+ * a date range.
+ */
 @Component
 public class SupplierPayablesController {
 
@@ -51,6 +55,9 @@ public class SupplierPayablesController {
     @FXML
     private Button closeButton;
 
+    /**
+     * Initializes date defaults and loads the initial summary.
+     */
     @FXML
     public void initialize() {
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
@@ -70,6 +77,9 @@ public class SupplierPayablesController {
                 data -> new SimpleStringProperty(data.getValue().latestDueDate));
     }
 
+    /**
+     * Recomputes supplier payable summaries for the selected range and filter.
+     */
     @FXML
     private void handleGenerate() {
         LocalDate start = startDatePicker.getValue();
@@ -153,6 +163,9 @@ public class SupplierPayablesController {
         totalDueLabel.setText(formatAmount(totalDue));
     }
 
+    /**
+     * Closes the payables window.
+     */
     @FXML
     private void handleClose() {
         ((Stage) closeButton.getScene().getWindow()).close();
@@ -162,6 +175,9 @@ public class SupplierPayablesController {
         return String.format("$%.2f", amount);
     }
 
+    /**
+     * Immutable table row for supplier payable aggregates.
+     */
     public static class SupplierPayableSummary {
         private final String supplierName;
         private final double totalBill;
@@ -170,6 +186,9 @@ public class SupplierPayablesController {
         private final String latestInvoiceNumber;
         private final String latestDueDate;
 
+        /**
+         * Creates a supplier payable summary row.
+         */
         public SupplierPayableSummary(String supplierName, double totalBill, double totalPaid, double totalDue,
                 String latestInvoiceNumber, String latestDueDate) {
             this.supplierName = supplierName;

@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Application service for managing {@link TestDefinition} master data used by
+ * the desktop UI.
+ */
 @Service
 public class TestDefinitionService {
 
@@ -19,35 +23,59 @@ public class TestDefinitionService {
     @Autowired
     private DepartmentRepository departmentRepository;
 
+    /**
+     * @return all test definitions
+     */
     public List<TestDefinition> findAll() {
         return testDefinitionRepository.findAll();
     }
 
+    /**
+     * Finds a test by id.
+     *
+     * @param id test id
+     * @return matching test, if present
+     */
     public Optional<TestDefinition> findById(Long id) {
         return testDefinitionRepository.findById(id);
     }
 
+    /**
+     * Saves a test definition.
+     *
+     * @param test test to save
+     * @return saved entity
+     */
     public TestDefinition save(TestDefinition test) {
         return testDefinitionRepository.save(test);
     }
 
+    /**
+     * Deletes a test definition by id.
+     *
+     * @param id test id
+     */
     public void deleteById(Long id) {
         testDefinitionRepository.deleteById(id);
     }
 
+    /**
+     * Performs a case-insensitive contains search across test names and short
+     * codes.
+     *
+     * @param query search text
+     * @return matching tests
+     */
     public List<TestDefinition> searchTests(String query) {
-        // Basic search implementation, relying on repository method if available or
-        // filtering via stream if not.
-        // Ideally we would add a search method to the repository.
-        // For now, let's just return all and filter in memory or assume similar logic.
-        // But let's check if repository has a search method or just use findAll for
-        // now.
         return testDefinitionRepository.findAll().stream()
                 .filter(t -> t.getTestName().toLowerCase().contains(query.toLowerCase()) ||
                         (t.getShortCode() != null && t.getShortCode().toLowerCase().contains(query.toLowerCase())))
                 .toList();
     }
 
+    /**
+     * @return all departments/categories
+     */
     public List<Department> findAllDepartments() {
         return departmentRepository.findAll();
     }

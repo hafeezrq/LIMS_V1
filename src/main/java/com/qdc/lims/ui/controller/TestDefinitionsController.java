@@ -17,6 +17,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+/**
+ * Controller for browsing, searching, and maintaining {@link TestDefinition}
+ * master data.
+ */
 @Component
 public class TestDefinitionsController {
 
@@ -40,6 +44,9 @@ public class TestDefinitionsController {
     @Autowired
     private TestDefinitionService testDefinitionService;
 
+    /**
+     * Initializes table bindings and loads initial data.
+     */
     @FXML
     public void initialize() {
         if (testDefinitionService == null) {
@@ -54,6 +61,9 @@ public class TestDefinitionsController {
         loadTests();
     }
 
+    /**
+     * Loads all tests into the table.
+     */
     private void loadTests() {
         try {
             ObservableList<TestDefinition> tests = FXCollections.observableArrayList(testDefinitionService.findAll());
@@ -65,6 +75,9 @@ public class TestDefinitionsController {
         }
     }
 
+    /**
+     * Configures the actions column with edit and delete buttons.
+     */
     private void setupActionsColumn() {
         colActions.setCellFactory(param -> new TableCell<>() {
             private final Button editBtn = new Button("Edit");
@@ -89,6 +102,9 @@ public class TestDefinitionsController {
         });
     }
 
+    /**
+     * Performs a search using the current query text.
+     */
     @FXML
     private void handleSearch() {
         String query = searchField.getText();
@@ -106,27 +122,42 @@ public class TestDefinitionsController {
         }
     }
 
+    /**
+     * Clears filters and reloads all tests.
+     */
     @FXML
     private void handleRefresh() {
         searchField.clear();
         loadTests();
     }
 
+    /**
+     * Opens the new-test dialog.
+     */
     @FXML
     private void handleNewTest() {
         showTestDialog(new TestDefinition());
     }
 
+    /**
+     * Closes the window hosting the controller.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) testTable.getScene().getWindow();
         stage.close();
     }
 
+    /**
+     * Opens the edit dialog for an existing test.
+     */
     private void handleEdit(TestDefinition test) {
         showTestDialog(test);
     }
 
+    /**
+     * Deletes a test after user confirmation.
+     */
     private void handleDelete(TestDefinition test) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Delete Test");
@@ -146,12 +177,14 @@ public class TestDefinitionsController {
         }
     }
 
+    /**
+     * Shows the create/edit dialog and persists the result.
+     */
     private void showTestDialog(TestDefinition test) {
         Dialog<TestDefinition> dialog = new Dialog<>();
         dialog.setTitle(test.getId() == null ? "New Test" : "Edit Test");
         dialog.setHeaderText(null);
 
-        // Set the button types.
         ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
@@ -184,10 +217,11 @@ public class TestDefinitionsController {
                 test.setShortCode(code.getText());
                 test.setDepartment(deptCombo.getValue());
                 try {
-                    if (!price.getText().isEmpty())
+                    if (!price.getText().isEmpty()) {
                         test.setPrice(new java.math.BigDecimal(price.getText()));
+                    }
                 } catch (NumberFormatException e) {
-                    // ignore invalid price
+                    // Ignore invalid price input and leave the prior value.
                 }
                 return test;
             }

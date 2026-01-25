@@ -10,11 +10,22 @@ import javafx.scene.layout.BorderPane;
 
 import java.util.Optional;
 
+/**
+ * UI helper for session-scoped logout actions that close the tab containing a
+ * given node after user confirmation.
+ */
 public final class LogoutUtil {
 
     private LogoutUtil() {
     }
 
+    /**
+     * Locates the parent tab for the provided node, asks for confirmation, and
+     * removes the tab if confirmed.
+     *
+     * @param contentNode any node contained within the tab to close
+     * @return {@code true} if a tab was closed
+     */
     public static boolean confirmAndCloseParentTab(Node contentNode) {
         if (contentNode == null || contentNode.getScene() == null) {
             showUnableToCloseAlert();
@@ -47,6 +58,9 @@ public final class LogoutUtil {
         return false;
     }
 
+    /**
+     * Shows a fallback message when the tab cannot be resolved.
+     */
     private static void showUnableToCloseAlert() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Logout");
@@ -55,6 +69,14 @@ public final class LogoutUtil {
         alert.showAndWait();
     }
 
+    /**
+     * Determines whether {@code node} is contained within {@code potentialParent}
+     * by traversing the parent chain.
+     *
+     * @param node node to test
+     * @param potentialParent potential ancestor
+     * @return {@code true} if the node is equal to or a descendant of the parent
+     */
     private static boolean isDescendantOf(Node node, Node potentialParent) {
         if (potentialParent == null || node == null) {
             return false;

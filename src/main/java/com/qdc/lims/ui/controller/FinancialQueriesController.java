@@ -26,6 +26,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controller for financial reporting queries. It aggregates income and expenses
+ * across orders, payments, commissions, and supplier ledgers.
+ */
 @Component
 public class FinancialQueriesController {
 
@@ -72,6 +76,10 @@ public class FinancialQueriesController {
     @FXML
     private PieChart expenseChart;
 
+    /**
+     * Initializes table styling, sets default dates, and generates the initial
+     * report.
+     */
     @FXML
     public void initialize() {
         setupTable();
@@ -98,23 +106,28 @@ public class FinancialQueriesController {
                     setText(item);
                     FinancialCategorySummary row = getTableRow().getItem();
                     if (row != null) {
-                        if ("INCOME".equals(row.getType()))
+                        if ("INCOME".equals(row.getType())) {
                             setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                        else
+                        } else {
                             setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                        }
                     }
                 }
             }
         });
     }
 
+    /**
+     * Aggregates and displays financial summaries for the selected date range.
+     */
     @FXML
     private void handleGenerateReport() {
         LocalDate start = startDatePicker.getValue();
         LocalDate end = endDatePicker.getValue();
 
-        if (start == null || end == null)
+        if (start == null || end == null) {
             return;
+        }
 
         Map<String, FinancialCategorySummary> summaryMap = new HashMap<>();
 
@@ -226,11 +239,18 @@ public class FinancialQueriesController {
         expenseChart.setData(pieData);
     }
 
+    /**
+     * Closes the financial queries window.
+     */
     @FXML
     private void handleClose() {
         ((Stage) closeButton.getScene().getWindow()).close();
     }
 
+    /**
+     * Calculates a commission amount from the underlying doctor rate and lab order
+     * total.
+     */
     private double getCommissionAmount(CommissionLedger commission) {
         if (commission.getDoctor() == null || commission.getDoctor().getCommissionPercentage() == null) {
             return 0.0;

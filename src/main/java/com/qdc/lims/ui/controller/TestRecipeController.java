@@ -16,6 +16,9 @@ import javafx.util.StringConverter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+/**
+ * Controller for defining per-test inventory consumption recipes.
+ */
 @Component
 @Scope("prototype")
 public class TestRecipeController {
@@ -46,6 +49,9 @@ public class TestRecipeController {
 
     private TestDefinition currentTest;
 
+    /**
+     * Creates the controller.
+     */
     public TestRecipeController(TestConsumptionRepository consumptionRepository,
             InventoryItemRepository inventoryRepository,
             TestDefinitionService testDefinitionService) {
@@ -54,15 +60,16 @@ public class TestRecipeController {
         this.testDefinitionService = testDefinitionService;
     }
 
+    /**
+     * Initializes table bindings, converters, and loads reference data.
+     */
     @FXML
     public void initialize() {
-        // Table Config
         itemNameColumn.setCellValueFactory(
                 cell -> new SimpleStringProperty(cell.getValue().getItem().getItemName()));
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         unitColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getItem().getUnit()));
 
-        // Combo Config
         testDefinitionComboBox.setConverter(new StringConverter<>() {
             @Override
             public String toString(TestDefinition test) {
@@ -100,6 +107,11 @@ public class TestRecipeController {
         }
     }
 
+    /**
+     * Sets the current test definition and reloads its recipe.
+     *
+     * @param test selected test
+     */
     public void setTestDefinition(TestDefinition test) {
         this.currentTest = test;
         if (test != null) {
@@ -124,21 +136,26 @@ public class TestRecipeController {
     private void loadInventoryItems() {
         inventoryItemComboBox.setItems(FXCollections.observableArrayList(
                 inventoryRepository.findAll().stream()
-                        .filter(item -> item.isActive())
+                        .filter(InventoryItem::isActive)
                         .sorted(java.util.Comparator.comparing(InventoryItem::getItemName, String.CASE_INSENSITIVE_ORDER))
                         .toList()));
     }
 
     private void loadRecipes() {
-        if (currentTest == null)
+        if (currentTest == null) {
             return;
+        }
         recipeTable.setItems(FXCollections.observableArrayList(consumptionRepository.findByTestId(currentTest.getId())));
     }
 
+    /**
+     * Adds or updates a recipe item for the selected test.
+     */
     @FXML
     private void handleAdd() {
-        if (currentTest == null)
+        if (currentTest == null) {
             return;
+        }
 
         InventoryItem selectedItem = inventoryItemComboBox.getValue();
         if (selectedItem == null) {
@@ -167,13 +184,15 @@ public class TestRecipeController {
         recipe.setQuantity(quantity);
         consumptionRepository.save(recipe);
 
-        // Reset form and reload
         quantityField.clear();
         inventoryItemComboBox.getSelectionModel().clearSelection();
         loadRecipes();
         setStatus("Saved recipe item: " + selectedItem.getItemName());
     }
 
+    /**
+     * Removes the selected recipe item after confirmation.
+     */
     @FXML
     private void handleRemove() {
         TestConsumption selected = recipeTable.getSelectionModel().getSelectedItem();
@@ -193,6 +212,9 @@ public class TestRecipeController {
         }
     }
 
+    /**
+     * Closes the window.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) recipeTable.getScene().getWindow();

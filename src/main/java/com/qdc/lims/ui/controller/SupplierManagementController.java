@@ -9,6 +9,9 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
+/**
+ * Controller for maintaining supplier master data.
+ */
 @Component
 public class SupplierManagementController {
 
@@ -30,14 +33,19 @@ public class SupplierManagementController {
     private final SupplierRepository supplierRepository;
     private Supplier currentSupplier = null;
 
+    /**
+     * Creates the controller.
+     */
     public SupplierManagementController(SupplierRepository supplierRepository) {
         this.supplierRepository = supplierRepository;
     }
 
+    /**
+     * Configures the list view and loads suppliers.
+     */
     @FXML
     public void initialize() {
-        // Setup ListView
-        supplierListView.setCellFactory(param -> new ListCell<Supplier>() {
+        supplierListView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(Supplier item, boolean empty) {
                 super.updateItem(item, empty);
@@ -50,7 +58,6 @@ public class SupplierManagementController {
             }
         });
 
-        // Listen for selection
         supplierListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 populateForm(newVal);
@@ -73,6 +80,9 @@ public class SupplierManagementController {
         addressArea.setText(supplier.getAddress());
     }
 
+    /**
+     * Saves a new or existing supplier.
+     */
     @FXML
     private void handleSave() {
         String name = companyNameField.getText().trim();
@@ -93,12 +103,14 @@ public class SupplierManagementController {
 
         supplierRepository.save(currentSupplier);
 
-        // Refresh and clear
         loadSuppliers();
         handleClear();
         showAlert("Success", "Supplier saved successfully.");
     }
 
+    /**
+     * Deletes the selected supplier after confirmation.
+     */
     @FXML
     private void handleDelete() {
         Supplier selected = supplierListView.getSelectionModel().getSelectedItem();
@@ -119,6 +131,9 @@ public class SupplierManagementController {
         }
     }
 
+    /**
+     * Clears the form and selection.
+     */
     @FXML
     private void handleClear() {
         currentSupplier = null;
@@ -129,6 +144,9 @@ public class SupplierManagementController {
         supplierListView.getSelectionModel().clearSelection();
     }
 
+    /**
+     * Closes the supplier management window.
+     */
     @FXML
     private void handleClose() {
         Stage stage = (Stage) supplierListView.getScene().getWindow();
