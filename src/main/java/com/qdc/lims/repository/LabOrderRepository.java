@@ -5,7 +5,9 @@ import com.qdc.lims.entity.LabOrder;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -15,6 +17,25 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface LabOrderRepository extends JpaRepository<LabOrder, Long> {
+
+    @EntityGraph(attributePaths = { "patient", "results", "results.testDefinition" })
+    List<LabOrder> findAll();
+
+    @Query("""
+            SELECT COUNT(DISTINCT o)
+            FROM LabOrder o
+            JOIN o.results r
+            WHERE o.status NOT IN ('COMPLETED', 'CANCELLED')
+            """)
+    long countPendingWithResults();
+
+    @Query("""
+            SELECT COUNT(DISTINCT o)
+            FROM LabOrder o
+            JOIN o.results r
+            WHERE o.status = 'COMPLETED'
+            """)
+    long countCompletedWithResults();
 
     /**
      * Finds all orders for a specific patient, sorted by order ID in descending

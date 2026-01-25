@@ -12,6 +12,7 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -91,6 +92,8 @@ public class ResultEntryController {
 
     private void setupResultsTable() {
         resultsTable.setEditable(true);
+        resultsTable.getSelectionModel().setCellSelectionEnabled(true);
+        resultsTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
         testNameColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().getTestDefinition().getTestName()));
@@ -156,33 +159,13 @@ public class ResultEntryController {
 
                 // --- NAVIGATION LOGIC ---
                 textField.setOnKeyPressed(event -> {
-                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                        // 1. Commit Current Data
+                    if (event.getCode() == javafx.scene.input.KeyCode.ENTER
+                            || event.getCode() == javafx.scene.input.KeyCode.TAB) {
                         commitEdit(textField.getText());
-                        event.consume(); // Stop default JavaFX behavior
+                        event.consume();
 
-                        // 2. Prepare Navigation
-                        int currentRow = getTableRow().getIndex();
-                        int nextRow = currentRow + 1;
-
-                        if (nextRow < getTableView().getItems().size()) {
-                            // 3. EXECUTE NAVIGATION (Delayed to allow commit to finish)
-                            Platform.runLater(() -> {
-                                // A. Select Next Row
-                                getTableView().getSelectionModel().clearAndSelect(nextRow);
-
-                                // B. Scroll to it (in case it's off screen)
-                                getTableView().scrollTo(nextRow);
-
-                                // C. Focus the Table and Column
-                                getTableView().getFocusModel().focus(nextRow, getTableColumn());
-
-                                // D. FORCE EDIT MODE (Nested RunLater ensures table is ready)
-                                Platform.runLater(() -> {
-                                    getTableView().edit(nextRow, getTableColumn());
-                                });
-                            });
-                        }
+                        int delta = event.isShiftDown() ? -1 : 1;
+                        navigateToRow(delta);
                     } else if (event.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                         super.cancelEdit();
                     }
@@ -198,6 +181,22 @@ public class ResultEntryController {
 
             private String getString() {
                 return getItem() == null ? "" : getItem();
+            }
+
+            private void navigateToRow(int delta) {
+                int currentRow = getTableRow().getIndex();
+                int targetRow = currentRow + delta;
+                if (targetRow < 0 || targetRow >= getTableView().getItems().size()) {
+                    return;
+                }
+
+                Platform.runLater(() -> {
+                    getTableView().requestFocus();
+                    getTableView().getSelectionModel().clearAndSelect(targetRow, getTableColumn());
+                    getTableView().scrollTo(targetRow);
+                    getTableView().getFocusModel().focus(targetRow, getTableColumn());
+                    Platform.runLater(() -> getTableView().edit(targetRow, getTableColumn()));
+                });
             }
         });
 
@@ -387,7 +386,12 @@ public class ResultEntryController {
                 }
 
                 currentOrder.setResults(new ArrayList<>(resultsTable.getItems()));
-                resultService.saveEditedResults(currentOrder, editReason);
+                try {
+                    resultService.saveEditedResults(currentOrder, editReason);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    showError("This order was updated by another user. Please refresh and try again.");
+                    return;
+                }
 
                 if (currentOrder.isReportDelivered()) {
                     showSuccess("Results updated. Reprint required for Reception.");
@@ -412,7 +416,12 @@ public class ResultEntryController {
                 if (result.getResultValue() != null && !result.getResultValue().trim().isEmpty()) {
                     result.setPerformedBy(currentUser);
                     result.setPerformedAt(LocalDateTime.now());
-                    resultRepository.save(result);
+                    try {
+                        resultRepository.save(result);
+                    } catch (ObjectOptimisticLockingFailureException e) {
+                        showError("A result was updated by another user. Please refresh and try again.");
+                        return;
+                    }
                 }
             }
 

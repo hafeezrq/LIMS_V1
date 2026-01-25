@@ -5,13 +5,14 @@ import com.qdc.lims.entity.Role;
 import com.qdc.lims.entity.User;
 import com.qdc.lims.repository.RoleRepository;
 import com.qdc.lims.repository.UserRepository;
+import com.qdc.lims.service.PasswordPolicyService;
+import com.qdc.lims.service.UserService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -67,14 +68,19 @@ public class UserManagementController {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
+    private final PasswordPolicyService passwordPolicyService;
+
+    private Long editingUserId;
 
     public UserManagementController(UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            UserService userService,
+            PasswordPolicyService passwordPolicyService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
+        this.passwordPolicyService = passwordPolicyService;
     }
 
     @FXML
@@ -140,12 +146,23 @@ public class UserManagementController {
         String fullName = fullNameField.getText().trim();
 
         if (username.isEmpty() || password.isEmpty() || fullName.isEmpty()) {
-            showError("Please fill in all required fields");
-            return;
+            if (editingUserId != null && !fullName.isEmpty() && !username.isEmpty()) {
+                // Allow blank password on edit to keep existing password.
+            } else {
+                showError("Please fill in all required fields");
+                return;
+            }
         }
 
-        // Check if username already exists
-        if (userRepository.findByUsername(username).isPresent()) {
+        // Enforce password policy when creating or when explicitly changing a password.
+        if (editingUserId == null || !password.isBlank()) {
+            passwordPolicyService.validate(password).ifPresent(msg -> {
+                throw new IllegalArgumentException(msg);
+            });
+        }
+
+        // Check if username already exists (only for new users)
+        if (editingUserId == null && userRepository.findByUsername(username).isPresent()) {
             showError("Username already exists");
             return;
         }
@@ -167,24 +184,40 @@ public class UserManagementController {
             return;
         }
 
-        // Create user
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setFullName(fullName);
-        user.setActive(activeCheckBox.isSelected());
-        user.setRoles(new HashSet<>(selectedRoles)); // Set roles directly
-
         try {
-            userRepository.save(user); // Save first to get ID
-            showSuccess("User created successfully!");
+            User user;
+            if (editingUserId != null) {
+                user = userService.getUserById(editingUserId)
+                        .orElseThrow(() -> new RuntimeException("User not found"));
+            } else {
+                user = new User();
+                user.setUsername(username);
+            }
+
+            user.setFullName(fullName);
+            user.setActive(activeCheckBox.isSelected());
+            user.setRoles(new HashSet<>(selectedRoles));
+
+            if (editingUserId == null || !password.isBlank()) {
+                user.setPassword(password);
+            }
+
+            if (editingUserId != null) {
+                userService.updateUser(user);
+                showSuccess("User updated successfully!");
+            } else {
+                userService.createUser(user);
+                showSuccess("User created successfully!");
+            }
 
             // Critical: reload from DB to ensure list is up-to-date with transactions
             loadUsers();
             handleClearForm();
+        } catch (IllegalArgumentException e) {
+            showError(e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            showError("Failed to create user: " + e.getMessage());
+            showError("Failed to save user: " + e.getMessage());
         }
     }
 
@@ -208,6 +241,7 @@ public class UserManagementController {
 
         activeCheckBox.setSelected(selectedUser.isActive());
 
+        editingUserId = selectedUser.getId();
         showInfo("Editing user: " + selectedUser.getUsername() + ". Update and click Create to save changes.");
     }
 
@@ -255,6 +289,7 @@ public class UserManagementController {
         receptionCheckBox.setSelected(false);
         labCheckBox.setSelected(false);
         activeCheckBox.setSelected(true);
+        editingUserId = null;
         messageLabel.setText("");
     }
 

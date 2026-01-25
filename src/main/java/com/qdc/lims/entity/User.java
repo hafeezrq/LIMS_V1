@@ -1,6 +1,9 @@
 package com.qdc.lims.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -34,16 +37,26 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @Column(unique = true, nullable = false, length = 50)
+    @NotBlank(message = "Username is required")
+    @Size(max = 50)
     private String username;
 
     @Column(nullable = false)
+    @NotBlank(message = "Password is required")
     private String password; // BCrypt hashed
 
     @Column(nullable = false, length = 100)
+    @NotBlank(message = "Full name is required")
+    @Size(max = 100)
     private String fullName;
 
     @Column(unique = true, length = 100)
+    @Email(message = "Email must be valid")
+    @Size(max = 100)
     private String email;
 
     @Column(length = 20)

@@ -1,6 +1,8 @@
 package com.qdc.lims.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -15,7 +17,12 @@ public class InventoryItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "Item name is required")
+    @Size(max = 255)
     private String itemName; // e.g., "Yellow Top Tube"
 
     private Double currentStock; // Using Double to handle liquids (e.g. 500.0 ml)

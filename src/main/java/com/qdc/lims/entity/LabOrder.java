@@ -1,6 +1,8 @@
 package com.qdc.lims.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,9 +20,13 @@ public class LabOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     // Link to the Patient
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "patient_id", nullable = false)
+    @NotNull(message = "Patient is required")
     private Patient patient;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -28,6 +34,7 @@ public class LabOrder {
     private Doctor referringDoctor; // Visible to Receptionist ("Ref By: Dr. Bilal")
 
     private LocalDateTime orderDate;
+    @NotBlank(message = "Status is required")
     private String status; // "PENDING", "COMPLETED"
     private Double totalAmount; // Calculated automatically
 

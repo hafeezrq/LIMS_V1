@@ -9,6 +9,7 @@
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
@@ -28,31 +29,35 @@
 
     <!-- Content -->
     <center>
-        <TableView fx:id="testTable" VBox.vgrow="ALWAYS">
-            <columns>
-                <TableColumn fx:id="colTestName" text="Test Name" prefWidth="200">
-                    <cellValueFactory><PropertyValueFactory property="testName"/></cellValueFactory>
-                </TableColumn>
-                <TableColumn fx:id="colShortCode" text="Short Code" prefWidth="100">
-                    <cellValueFactory><PropertyValueFactory property="shortCode"/></cellValueFactory>
-                </TableColumn>
-                <TableColumn fx:id="colDepartment" text="Department" prefWidth="150">
-                    <cellValueFactory><PropertyValueFactory property="department"/></cellValueFactory>
-                </TableColumn>
-                <TableColumn fx:id="colPrice" text="Price" prefWidth="100">
-                    <cellValueFactory><PropertyValueFactory property="price"/></cellValueFactory>
-                </TableColumn>
-                <TableColumn fx:id="colActions" text="Actions" prefWidth="150"/>
-            </columns>
-            <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-            </columnResizePolicy>
-        </TableView>
+        <VBox style="-fx-padding: 0 20 20 20;">
+            <TableView fx:id="testTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colTestName" text="Test Name" prefWidth="200">
+                        <cellValueFactory><PropertyValueFactory property="testName"/></cellValueFactory>
+                    </TableColumn>
+                    <TableColumn fx:id="colShortCode" text="Short Code" prefWidth="100">
+                        <cellValueFactory><PropertyValueFactory property="shortCode"/></cellValueFactory>
+                    </TableColumn>
+                    <TableColumn fx:id="colDepartment" text="Department" prefWidth="150">
+                        <cellValueFactory><PropertyValueFactory property="department"/></cellValueFactory>
+                    </TableColumn>
+                    <TableColumn fx:id="colPrice" text="Price" prefWidth="100">
+                        <cellValueFactory><PropertyValueFactory property="price"/></cellValueFactory>
+                    </TableColumn>
+                    <TableColumn fx:id="colActions" text="Actions" prefWidth="150"/>
+                </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
+            </TableView>
+        </VBox>
     </center>
 
     <bottom>
-        <HBox alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+        <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 12 20 16 20;">
             <Label fx:id="statusLabel" text="Ready"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Close" onAction="#handleClose" style="-fx-background-color: #7f8c8d; -fx-text-fill: white;" prefWidth="100"/>
         </HBox>
     </bottom>
 </BorderPane>

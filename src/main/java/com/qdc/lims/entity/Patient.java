@@ -1,7 +1,8 @@
 package com.qdc.lims.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull; // Import for validation
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -20,13 +21,18 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @Column(nullable = false, unique = true, updatable = false)
+    @NotBlank(message = "MRN is required")
     private String mrn;
 
     @Column(unique = true)
     private String cnic;
 
     @Column(nullable = false)
+    @NotBlank(message = "Full name is required")
     private String fullName;
 
     // --- NEW FIELDS ---

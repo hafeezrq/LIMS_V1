@@ -13,10 +13,20 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Value;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -66,14 +76,25 @@ public class MainWindowController {
     // Track which tab belongs to which session
     private final Map<Tab, SessionInfo> tabSessions = new HashMap<>();
 
+    @Value("${qdc.session.timeout:30}")
+    private long sessionTimeoutMinutes;
+
+    private Timeline sessionExpiryTimer;
+
     // Session info holder
     private static class SessionInfo {
         User user;
         DashboardType dashboardType;
+        Instant lastAccess;
 
         SessionInfo(User user, DashboardType dashboardType) {
             this.user = user;
             this.dashboardType = dashboardType;
+            touch();
+        }
+
+        void touch() {
+            lastAccess = Instant.now();
         }
     }
 
@@ -101,6 +122,12 @@ public class MainWindowController {
             if (newTab != null) {
                 SessionInfo session = tabSessions.get(newTab);
                 if (session != null && session.user != null) {
+                    if (isExpired(session)) {
+                        expireSessionTab(newTab, session, true);
+                        updateButtonStates();
+                        return;
+                    }
+                    session.touch();
                     // Update SessionManager so the selected tab's user is the "current" user
                     Platform.runLater(() -> {
                         Stage stage = (Stage) mainContainer.getScene().getWindow();
@@ -130,6 +157,7 @@ public class MainWindowController {
         // Initially hide tabs and show welcome
         updateUI();
         updateButtonStates();
+        setupSessionTimeoutHandlers();
     }
 
     /**
@@ -705,6 +733,91 @@ public class MainWindowController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void setupSessionTimeoutHandlers() {
+        if (sessionTimeoutMinutes <= 0) {
+            return;
+        }
+
+        sessionExpiryTimer = new Timeline(
+                new KeyFrame(javafx.util.Duration.seconds(30), event -> expireInactiveSessions()));
+        sessionExpiryTimer.setCycleCount(Animation.INDEFINITE);
+        sessionExpiryTimer.play();
+
+        mainContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                return;
+            }
+            newScene.addEventFilter(KeyEvent.KEY_PRESSED, event -> touchActiveSession());
+            newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> touchActiveSession());
+        });
+    }
+
+    private void touchActiveSession() {
+        Tab active = sessionTabs.getSelectionModel().getSelectedItem();
+        if (active == null) {
+            return;
+        }
+        SessionInfo session = tabSessions.get(active);
+        if (session != null) {
+            session.touch();
+        }
+    }
+
+    private void expireInactiveSessions() {
+        Duration timeout = getSessionTimeout();
+        if (timeout.isZero()) {
+            return;
+        }
+
+        List<Tab> expiredTabs = new ArrayList<>();
+        for (Map.Entry<Tab, SessionInfo> entry : tabSessions.entrySet()) {
+            if (isExpired(entry.getValue())) {
+                expiredTabs.add(entry.getKey());
+            }
+        }
+
+        if (expiredTabs.isEmpty()) {
+            return;
+        }
+
+        for (Tab tab : expiredTabs) {
+            SessionInfo session = tabSessions.get(tab);
+            expireSessionTab(tab, session, tab == sessionTabs.getSelectionModel().getSelectedItem());
+        }
+        updateUI();
+        updateButtonStates();
+    }
+
+    private void expireSessionTab(Tab tab, SessionInfo session, boolean notifyUser) {
+        if (tab == null || session == null) {
+            return;
+        }
+        if (notifyUser) {
+            showAlert("Session Expired", "Your session has expired due to inactivity.");
+        }
+        tabSessions.remove(tab);
+        sessionTabs.getTabs().remove(tab);
+        setStatus("Session expired: " + session.user.getUsername());
+    }
+
+    private boolean isExpired(SessionInfo session) {
+        Duration timeout = getSessionTimeout();
+        if (timeout.isZero()) {
+            return false;
+        }
+        if (session == null || session.lastAccess == null) {
+            return false;
+        }
+        return Duration.between(session.lastAccess, Instant.now()).compareTo(timeout) > 0;
+    }
+
+    private Duration getSessionTimeout() {
+        if (sessionTimeoutMinutes <= 0) {
+            return Duration.ZERO;
+        }
+        return Duration.ofMinutes(sessionTimeoutMinutes);
     }
 
     /**

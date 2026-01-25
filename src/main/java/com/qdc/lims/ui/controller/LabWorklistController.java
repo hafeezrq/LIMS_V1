@@ -219,6 +219,11 @@ public class LabWorklistController {
         List<LabOrder> filteredOrders = allOrders;
         String searchTerm = searchField.getText().trim().toLowerCase();
 
+        // Do not show orders that have no tests/results attached.
+        filteredOrders = filteredOrders.stream()
+                .filter(order -> order.getResults() != null && !order.getResults().isEmpty())
+                .collect(Collectors.toList());
+
         if (pendingRadio.isSelected()) {
             filteredOrders = filteredOrders.stream()
                     .filter(order -> "PENDING".equals(order.getStatus()))
@@ -240,13 +245,17 @@ public class LabWorklistController {
     }
 
     private void updateStats() {
-        long pending = orderRepository.countByStatus("PENDING");
+        long pending = orderRepository.countPendingWithResults();
         LocalDate today = LocalDate.now();
-        long completedToday = orderRepository.countByStatusAndOrderDateBetween(
+        long completedToday = orderRepository.findByStatusAndOrderDateBetween(
                 "COMPLETED",
                 today.atStartOfDay(),
-                today.atTime(23, 59, 59));
-        long total = orderRepository.count();
+                today.atTime(23, 59, 59)).stream()
+                .filter(order -> order.getResults() != null && !order.getResults().isEmpty())
+                .count();
+        long total = orderRepository.findAll().stream()
+                .filter(order -> order.getResults() != null && !order.getResults().isEmpty())
+                .count();
 
         pendingCountLabel.setText(String.valueOf(pending));
         completedTodayLabel.setText(String.valueOf(completedToday));

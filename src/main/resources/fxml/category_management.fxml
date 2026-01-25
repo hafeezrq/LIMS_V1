@@ -8,18 +8,18 @@
       fx:controller="com.qdc.lims.ui.controller.CategoryManagementController"
       spacing="15" prefWidth="600" prefHeight="450" style="-fx-padding: 20;">
     
-    <Label text="Test Category Management" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-    <Label text="Manage departments/categories for test definitions." style="-fx-font-size: 14; -fx-text-fill: #7f8c8d;"/>
+    <Label text="Department Management" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <Label text="Manage departments used by test definitions." style="-fx-font-size: 14; -fx-text-fill: #7f8c8d;"/>
     <Separator/>
     
     <HBox spacing="15" VBox.vgrow="ALWAYS">
-        <!-- List of Categories -->
+        <!-- List of Departments -->
         <VBox spacing="10" HBox.hgrow="ALWAYS">
-            <Label text="Categories" style="-fx-font-weight: bold;"/>
+            <Label text="Departments" style="-fx-font-weight: bold;"/>
             <TableView fx:id="categoryTable" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="nameColumn" text="Category Name" prefWidth="200"/>
-                    <TableColumn fx:id="descriptionColumn" text="Description" prefWidth="200"/>
+                    <TableColumn fx:id="nameColumn" text="Department Name" prefWidth="200"/>
+                    <TableColumn fx:id="descriptionColumn" text="Code" prefWidth="200"/>
                 </columns>
             </TableView>
             <HBox spacing="10" alignment="CENTER_LEFT">
@@ -29,7 +29,7 @@
         
         <!-- Add Form -->
         <VBox spacing="15" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;" prefWidth="250">
-            <Label text="New Category" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+            <Label text="New Department" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
             
             <VBox spacing="5">
                 <Label text="Name:"/>
@@ -37,8 +37,8 @@
             </VBox>
             
             <VBox spacing="5">
-                <Label text="Description:"/>
-                <TextArea fx:id="descriptionArea" promptText="Optional description" prefRowCount="3" wrapText="true"/>
+                <Label text="Code:"/>
+                <TextArea fx:id="descriptionArea" promptText="Optional short code (e.g. HEM)" prefRowCount="3" wrapText="true"/>
             </VBox>
             
             <Region VBox.vgrow="ALWAYS"/>

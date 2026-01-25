@@ -11,6 +11,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -114,6 +115,12 @@ public class TestDefinitionsController {
     @FXML
     private void handleNewTest() {
         showTestDialog(new TestDefinition());
+    }
+
+    @FXML
+    private void handleClose() {
+        Stage stage = (Stage) testTable.getScene().getWindow();
+        stage.close();
     }
 
     private void handleEdit(TestDefinition test) {

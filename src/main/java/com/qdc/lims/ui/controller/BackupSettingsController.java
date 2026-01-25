@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Backup/Restore settings window.
@@ -90,6 +91,16 @@ public class BackupSettingsController {
             return;
         }
 
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Restore");
+        confirm.setHeaderText("Restore will replace current database data.");
+        confirm.setContentText("This action cannot be undone. Continue?");
+        Optional<ButtonType> proceed = confirm.showAndWait();
+        if (proceed.isEmpty() || proceed.get() != ButtonType.OK) {
+            showError("Restore cancelled.");
+            return;
+        }
+
         TextInputDialog passDialog = new TextInputDialog();
         passDialog.setTitle("Restore Backup");
         passDialog.setHeaderText("Enter backup password");
@@ -112,7 +123,7 @@ public class BackupSettingsController {
 
             Platform.exit();
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError(e.getMessage() != null ? e.getMessage() : "Restore failed.");
         }
     }
 

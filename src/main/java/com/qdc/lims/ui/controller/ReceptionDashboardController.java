@@ -35,6 +35,7 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.springframework.context.ApplicationContext;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 import java.text.DecimalFormat;
@@ -405,6 +406,11 @@ public class ReceptionDashboardController {
             List<LabOrder> reprintRequired = labOrderRepository.findByReprintRequiredTrue();
             delivered = mergeDeliveredLists(delivered, reprintRequired);
 
+            // Align with lab worklist: ignore orders that have no tests/results attached.
+            allOrders = allOrders.stream()
+                    .filter(o -> o.getResults() != null && !o.getResults().isEmpty())
+                    .collect(Collectors.toList());
+
             List<LabOrder> ready = allOrders.stream()
                     .filter(o -> "COMPLETED".equals(o.getStatus()) && !o.isReportDelivered())
                     .collect(Collectors.toList());
@@ -653,9 +659,13 @@ public class ReceptionDashboardController {
                     Double currentPaid = order.getPaidAmount() != null ? order.getPaidAmount() : 0;
                     order.setPaidAmount(currentPaid + payment);
                     order.calculateBalance();
-                    labOrderRepository.save(order);
-                    showAlert("Payment Recorded", "Payment of Rs. " + df.format(payment) + " has been recorded.");
-                    return true;
+                    try {
+                        labOrderRepository.save(order);
+                        showAlert("Payment Recorded", "Payment of Rs. " + df.format(payment) + " has been recorded.");
+                        return true;
+                    } catch (ObjectOptimisticLockingFailureException e) {
+                        showError("This order was updated by another user. Please refresh and try again.");
+                    }
                 }
             } catch (NumberFormatException e) {
                 showError("Invalid payment amount");
@@ -728,6 +738,8 @@ public class ReceptionDashboardController {
             labOrderRepository.save(order);
             showAlert("Report Delivered", "Report for Order #" + order.getId() + " has been marked as delivered.");
             loadOrders();
+        } catch (ObjectOptimisticLockingFailureException e) {
+            showError("This order was updated by another user. Please refresh and try again.");
         } catch (Exception e) {
             showError("Failed to mark as delivered: " + e.getMessage());
         }
@@ -748,6 +760,8 @@ public class ReceptionDashboardController {
             order.setLastReprintBy(getCurrentUsername());
             labOrderRepository.save(order);
             loadOrders();
+        } catch (ObjectOptimisticLockingFailureException e) {
+            showError("This order was updated by another user. Please refresh and try again.");
         } catch (Exception e) {
             showError("Failed to record reprint: " + e.getMessage());
         }
@@ -771,23 +785,28 @@ public class ReceptionDashboardController {
     private StackPane createReportContent(LabOrder order, PageLayout pageLayout) {
         double printableWidth = pageLayout.getPrintableWidth();
         double printableHeight = pageLayout.getPrintableHeight();
-        double contentWidth = Math.min(520, printableWidth * 0.75);
+        // Reserve space for pre-printed letterhead: 2.5 inches from the top.
+        double topInset = 2.5 * 72.0;
+        double safeTopInset = Math.min(topInset, printableHeight * 0.45);
+        double contentWidth = Math.min(620, printableWidth * 0.9);
 
         TextFlow flow = new TextFlow();
         flow.setPrefWidth(contentWidth);
-        flow.setLineSpacing(2);
+        flow.setLineSpacing(4);
         flow.setTextAlignment(TextAlignment.LEFT);
         Patient patient = order.getPatient();
-        Text header = new Text("QDC LABORATORY - TEST REPORT\n\n");
-        header.setStyle("-fx-font-size: 16; -fx-font-weight: bold;");
+        Text header = new Text("LABORATORY TEST REPORT\n");
+        header.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
 
-        Text patientInfo = new Text("Patient: " + patient.getFullName() + "\n" +
-                "MRN: " + patient.getMrn() + "\n" +
-                "Age/Gender: " + patient.getAge() + " / " + patient.getGender() + "\n" +
-                "Order Date: " + order.getOrderDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"))
-                + "\n\n");
+        Text patientInfo = new Text(
+                "\nPatient: " + patient.getFullName() + "\n" +
+                        "MRN: " + patient.getMrn() + "\n" +
+                        "Age/Gender: " + patient.getAge() + " / " + patient.getGender() + "\n" +
+                        "Order Date: " + order.getOrderDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"))
+                        + "\n");
 
-        StringBuilder results = new StringBuilder("TEST RESULTS\n" + "-".repeat(40) + "\n");
+        String separator = "-".repeat(52);
+        StringBuilder results = new StringBuilder("\nTEST RESULTS\n" + separator + "\n");
         if (order.getResults() != null) {
             for (LabResult result : order.getResults()) {
                 String testName = result.getTestDefinition() != null ? result.getTestDefinition().getTestName()
@@ -797,22 +816,23 @@ public class ReceptionDashboardController {
                 results.append(testName).append(": ").append(value).append(flag).append("\n");
             }
         }
-        results.append("-".repeat(40)).append("\n\n");
+        results.append(separator).append("\n\n");
         Text resultsText = new Text(results.toString());
-        Text footer = new Text("Report Generated: "
-                + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) + "\n" +
-                "Thank you for choosing QDC Laboratory");
-        footer.setStyle("-fx-font-size: 10;");
+        Text footer = new Text(
+                "Report Generated: "
+                        + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) + "\n" +
+                        "This is a computer-generated report.");
+        footer.setStyle("-fx-font-size: 10; -fx-fill: #555555;");
 
         flow.getChildren().addAll(header, patientInfo, resultsText, footer);
         VBox content = new VBox(flow);
         content.setAlignment(Pos.TOP_LEFT);
         content.setPrefWidth(contentWidth);
-        content.setPadding(new Insets(20, 10, 20, 10));
+        content.setPadding(new Insets(safeTopInset, 24, 28, 24));
 
         StackPane page = new StackPane(content);
         page.setPrefSize(printableWidth, printableHeight);
-        StackPane.setAlignment(content, Pos.CENTER);
+        StackPane.setAlignment(content, Pos.TOP_CENTER);
         return page;
     }
 

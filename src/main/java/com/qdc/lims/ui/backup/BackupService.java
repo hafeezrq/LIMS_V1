@@ -2,17 +2,24 @@ package com.qdc.lims.ui.backup;
 
 import com.qdc.lims.ui.AppPaths;
 import net.lingala.zip4j.ZipFile;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +30,15 @@ public class BackupService {
 
     private final DataSource dataSource;
     private final BackupSettingsService settings;
+
+    @Value("${spring.datasource.url:}")
+    private String jdbcUrl;
+
+    @Value("${spring.datasource.username:}")
+    private String jdbcUsername;
+
+    @Value("${spring.datasource.password:}")
+    private String jdbcPassword;
 
     public BackupService(DataSource dataSource, BackupSettingsService settings) {
         this.dataSource = dataSource;
@@ -36,26 +52,22 @@ public class BackupService {
         try {
             Files.createDirectories(AppPaths.backupsDir());
 
-            Path tempDb = Files.createTempFile("qdc-lims-backup-", ".db");
-            tempDb.toFile().deleteOnExit();
+            boolean postgres = isPostgres();
+            String suffix = postgres ? ".dump" : ".db";
+            Path tempBackup = Files.createTempFile("qdc-lims-backup-", suffix);
+            tempBackup.toFile().deleteOnExit();
 
-            // Safe SQLite copy using VACUUM INTO (requires SQLite 3.27+).
-            try (var conn = dataSource.getConnection()) {
-                if (!conn.getClass().getName().toLowerCase().contains("sqlite")) {
-                    throw new IllegalStateException("Unsupported DB connection for backup: " + conn.getClass());
-                }
-                try (var st = conn.createStatement()) {
-                    // Use forward slashes in path for SQLite SQL literal compatibility.
-                    String outPath = tempDb.toAbsolutePath().toString().replace("\\", "/");
-                    st.execute("VACUUM INTO '" + outPath.replace("'", "''") + "'");
-                }
+            if (postgres) {
+                runPostgresDump(tempBackup);
+            } else {
+                runSqliteBackup(tempBackup);
             }
 
             String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
             Path outZip = AppPaths.backupsDir().resolve("backup_" + ts + ".zip");
 
             try (ZipFile zipFile = new ZipFile(outZip.toFile(), password)) {
-                zipFile.addFile(tempDb.toFile());
+                zipFile.addFile(tempBackup.toFile());
             }
 
             // Update daily marker
@@ -66,7 +78,7 @@ public class BackupService {
 
             // Cleanup best-effort
             try {
-                Files.deleteIfExists(tempDb);
+                Files.deleteIfExists(tempBackup);
             } catch (IOException ignored) {
             }
 
@@ -91,22 +103,29 @@ public class BackupService {
 
             List<Path> dbFiles;
             try (var stream = Files.list(tempDir)) {
-                dbFiles = stream.filter(p -> p.getFileName().toString().endsWith(".db"))
+                dbFiles = stream.filter(p -> {
+                    String name = p.getFileName().toString().toLowerCase();
+                    return name.endsWith(".db") || name.endsWith(".dump");
+                })
                         .collect(Collectors.toList());
             }
 
             if (dbFiles.isEmpty()) {
-                throw new IllegalArgumentException("Backup archive does not contain a .db file");
+                throw new IllegalArgumentException("Backup archive does not contain a supported database file");
             }
 
-            Path extractedDb = dbFiles.get(0);
-            Path targetDb = AppPaths.databasePath();
-            Files.createDirectories(targetDb.getParent());
+            Path extracted = dbFiles.get(0);
+            if (isPostgres()) {
+                runPostgresRestore(extracted);
+            } else {
+                Path targetDb = AppPaths.databasePath();
+                Files.createDirectories(targetDb.getParent());
 
-            // NOTE: replacing the DB while the app is running is risky.
-            // We do a best-effort overwrite; the UI should trigger an app restart after
-            // this.
-            Files.copy(extractedDb, targetDb, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                // NOTE: replacing the DB while the app is running is risky.
+                // We do a best-effort overwrite; the UI should trigger an app restart after
+                // this.
+                Files.copy(extracted, targetDb, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Restore failed: " + e.getMessage(), e);
         }
@@ -149,6 +168,109 @@ public class BackupService {
                     Files.deleteIfExists(p);
                 }
             }
+        }
+    }
+
+    private boolean isPostgres() {
+        return jdbcUrl != null && jdbcUrl.startsWith("jdbc:postgresql:");
+    }
+
+    private void runSqliteBackup(Path outFile) throws Exception {
+        // Safe SQLite copy using VACUUM INTO (requires SQLite 3.27+).
+        try (var conn = dataSource.getConnection()) {
+            if (!conn.getClass().getName().toLowerCase().contains("sqlite")) {
+                throw new IllegalStateException("Unsupported DB connection for SQLite backup: " + conn.getClass());
+            }
+            try (var st = conn.createStatement()) {
+                String outPath = outFile.toAbsolutePath().toString().replace("\\", "/");
+                st.execute("VACUUM INTO '" + outPath.replace("'", "''") + "'");
+            }
+        }
+    }
+
+    private void runPostgresDump(Path outFile) throws Exception {
+        String conn = toPostgresUri(jdbcUrl);
+        List<String> command = List.of(
+                "pg_dump",
+                "--format=custom",
+                "--file", outFile.toString(),
+                "--dbname", conn,
+                "--no-owner",
+                "--no-privileges");
+        runCommand(command, postgresEnv());
+    }
+
+    private void runPostgresRestore(Path dumpFile) throws Exception {
+        String conn = toPostgresUri(jdbcUrl);
+        List<String> command = List.of(
+                "pg_restore",
+                "--clean",
+                "--if-exists",
+                "--no-owner",
+                "--no-privileges",
+                "--dbname", conn,
+                dumpFile.toString());
+        runCommand(command, postgresEnv());
+    }
+
+    private Map<String, String> postgresEnv() {
+        Map<String, String> env = new HashMap<>();
+        if (jdbcUsername != null && !jdbcUsername.isBlank()) {
+            env.put("PGUSER", jdbcUsername);
+        }
+        if (jdbcPassword != null && !jdbcPassword.isBlank()) {
+            env.put("PGPASSWORD", jdbcPassword);
+        }
+        return env;
+    }
+
+    private void runCommand(List<String> command, Map<String, String> env) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectErrorStream(true);
+        if (env != null && !env.isEmpty()) {
+            pb.environment().putAll(env);
+        }
+
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e) {
+            String tool = command.isEmpty() ? "command" : command.get(0);
+            throw new IllegalStateException(tool + " is not available on this system.", e);
+        }
+        StringBuilder output = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append(System.lineSeparator());
+            }
+        }
+
+        int exit = process.waitFor();
+        if (exit != 0) {
+            throw new IllegalStateException(output.toString().trim().isEmpty()
+                    ? "Command failed: " + String.join(" ", command)
+                    : output.toString().trim());
+        }
+    }
+
+    private String toPostgresUri(String jdbc) {
+        if (jdbc == null || jdbc.isBlank()) {
+            throw new IllegalStateException("JDBC URL is not configured");
+        }
+        try {
+            URI uri = new URI(jdbc.substring("jdbc:".length()));
+            String host = uri.getHost() != null ? uri.getHost() : "localhost";
+            int port = uri.getPort() > 0 ? uri.getPort() : 5432;
+            String path = uri.getPath() != null ? uri.getPath() : "";
+            String dbName = path.startsWith("/") ? path.substring(1) : path;
+            if (dbName.isBlank()) {
+                throw new IllegalStateException("Unable to determine database name from JDBC URL");
+            }
+            return "postgresql://" + host + ":" + port + "/" + dbName;
+        } catch (Exception e) {
+            throw new IllegalStateException("Invalid PostgreSQL JDBC URL: " + jdbc, e);
         }
     }
 }

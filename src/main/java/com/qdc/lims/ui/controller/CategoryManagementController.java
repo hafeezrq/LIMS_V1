@@ -1,7 +1,7 @@
 package com.qdc.lims.ui.controller;
 
-import com.qdc.lims.entity.TestCategory;
-import com.qdc.lims.repository.TestCategoryRepository;
+import com.qdc.lims.entity.Department;
+import com.qdc.lims.repository.DepartmentRepository;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -17,26 +17,26 @@ import java.util.Optional;
 public class CategoryManagementController {
 
     @FXML
-    private TableView<TestCategory> categoryTable;
+    private TableView<Department> categoryTable;
     @FXML
-    private TableColumn<TestCategory, String> nameColumn;
+    private TableColumn<Department, String> nameColumn;
     @FXML
-    private TableColumn<TestCategory, String> descriptionColumn;
+    private TableColumn<Department, String> descriptionColumn;
 
     @FXML
     private TextField nameField;
     @FXML
     private TextArea descriptionArea;
 
-    private final TestCategoryRepository categoryRepository;
-    private final ObservableList<TestCategory> categoryList = FXCollections.observableArrayList();
+    private final DepartmentRepository departmentRepository;
+    private final ObservableList<Department> categoryList = FXCollections.observableArrayList();
 
     // Callback to refresh parent controller's combo box
     private Runnable onUpdateCallback;
 
     @Autowired
-    public CategoryManagementController(TestCategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public CategoryManagementController(DepartmentRepository departmentRepository) {
+        this.departmentRepository = departmentRepository;
     }
 
     @FXML
@@ -55,20 +55,20 @@ public class CategoryManagementController {
 
     private void setupTable() {
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
+        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
 
         categoryTable.setItems(categoryList);
     }
 
     private void loadCategories() {
         categoryList.clear();
-        categoryList.addAll(categoryRepository.findAll());
+        categoryList.addAll(departmentRepository.findAll());
     }
 
-    private void showDetails(TestCategory category) {
+    private void showDetails(Department category) {
         if (category != null) {
             nameField.setText(category.getName());
-            descriptionArea.setText(category.getDescription());
+            descriptionArea.setText(category.getCode());
         } else {
             handleClear();
         }
@@ -78,36 +78,36 @@ public class CategoryManagementController {
     private void handleSave() {
         String name = nameField.getText();
         if (name == null || name.trim().isEmpty()) {
-            showAlert("Error", "Category name is required.");
+            showAlert("Error", "Department name is required.");
             return;
         }
 
         try {
-            TestCategory category = categoryTable.getSelectionModel().getSelectedItem();
+            Department category = categoryTable.getSelectionModel().getSelectedItem();
             if (category == null) {
                 // Check for duplicate name for new items
-                Optional<TestCategory> existing = categoryRepository.findByName(name.trim());
+                Optional<Department> existing = departmentRepository.findByName(name.trim());
                 if (existing.isPresent()) {
-                    showAlert("Error", "Category with this name already exists.");
+                    showAlert("Error", "Department with this name already exists.");
                     return;
                 }
-                category = new TestCategory();
+                category = new Department();
             } else {
                 // If editing, check if name changed and if it conflicts
                 if (!category.getName().equals(name.trim())) {
-                    Optional<TestCategory> existing = categoryRepository.findByName(name.trim());
+                    Optional<Department> existing = departmentRepository.findByName(name.trim());
                     if (existing.isPresent()) {
-                        showAlert("Error", "Category with this name already exists.");
+                        showAlert("Error", "Department with this name already exists.");
                         return;
                     }
                 }
             }
 
             category.setName(name.trim());
-            category.setDescription(descriptionArea.getText());
+            category.setCode(descriptionArea.getText() != null ? descriptionArea.getText().trim() : null);
             category.setActive(true);
 
-            categoryRepository.save(category);
+            departmentRepository.save(category);
             loadCategories();
             handleClear();
 
@@ -116,26 +116,26 @@ public class CategoryManagementController {
             }
 
         } catch (Exception e) {
-            showAlert("Error", "Failed to save category: " + e.getMessage());
+            showAlert("Error", "Failed to save department: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleDelete() {
-        TestCategory selected = categoryTable.getSelectionModel().getSelectedItem();
+        Department selected = categoryTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("Warning", "Please select a category to delete.");
+            showAlert("Warning", "Please select a department to delete.");
             return;
         }
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Delete Category");
+        alert.setTitle("Delete Department");
         alert.setHeaderText("Are you sure?");
-        alert.setContentText("Delete category: " + selected.getName() + "?");
+        alert.setContentText("Delete department: " + selected.getName() + "?");
 
         if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             try {
-                categoryRepository.delete(selected);
+                departmentRepository.delete(selected);
                 loadCategories();
                 handleClear();
 
@@ -143,7 +143,7 @@ public class CategoryManagementController {
                     onUpdateCallback.run();
                 }
             } catch (Exception e) {
-                showAlert("Error", "Cannot delete category (it may be in use).");
+                showAlert("Error", "Cannot delete department (it may be in use).");
             }
         }
     }

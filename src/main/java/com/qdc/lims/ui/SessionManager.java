@@ -5,6 +5,8 @@ import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +25,8 @@ public class SessionManager {
     // Track the currently active window for backward compatibility
     private static Stage activeStage;
 
+    private static volatile Duration sessionTimeout = Duration.ofMinutes(30);
+
     /**
      * Session data for a single window.
      */
@@ -31,6 +35,7 @@ public class SessionManager {
     public static class UserSession {
         private User user;
         private String currentRole;
+        private Instant lastAccess;
 
         public UserSession(User user) {
             setUser(user);
@@ -53,13 +58,38 @@ public class SessionManager {
             } else {
                 this.currentRole = null;
             }
+            touch();
         }
 
         public boolean hasRole(String roleNameFragment) {
             if (user == null || user.getRoles() == null)
                 return false;
             return user.getRoles().stream()
-                    .anyMatch(r -> r.getName().contains(roleNameFragment));
+                    .anyMatch(r -> roleMatches(r.getName(), roleNameFragment));
+        }
+
+        private boolean roleMatches(String roleName, String query) {
+            if (roleName == null || query == null) {
+                return false;
+            }
+            if (query.startsWith("ROLE_")) {
+                return roleName.equalsIgnoreCase(query);
+            }
+            return roleName.equalsIgnoreCase(query) || roleName.equalsIgnoreCase("ROLE_" + query);
+        }
+
+        private void touch() {
+            lastAccess = Instant.now();
+        }
+
+        private boolean isExpired() {
+            if (sessionTimeout == null || sessionTimeout.isZero() || sessionTimeout.isNegative()) {
+                return false;
+            }
+            if (lastAccess == null) {
+                return false;
+            }
+            return Duration.between(lastAccess, Instant.now()).compareTo(sessionTimeout) > 0;
         }
     }
 
@@ -87,14 +117,14 @@ public class SessionManager {
      * Get session for a specific window.
      */
     public static UserSession getSession(Stage stage) {
-        return windowSessions.get(stage);
+        return getActiveSession(stage);
     }
 
     /**
      * Get user for a specific window.
      */
     public static User getUser(Stage stage) {
-        UserSession session = windowSessions.get(stage);
+        UserSession session = getActiveSession(stage);
         return session != null ? session.getUser() : null;
     }
 
@@ -102,7 +132,7 @@ public class SessionManager {
      * Get current role for a specific window.
      */
     public static String getRole(Stage stage) {
-        UserSession session = windowSessions.get(stage);
+        UserSession session = getActiveSession(stage);
         return session != null ? session.getCurrentRole() : null;
     }
 
@@ -110,7 +140,7 @@ public class SessionManager {
      * Set current role for a specific window.
      */
     public static void setRole(Stage stage, String role) {
-        UserSession session = windowSessions.get(stage);
+        UserSession session = getActiveSession(stage);
         if (session != null) {
             session.setCurrentRole(role);
         }
@@ -120,7 +150,7 @@ public class SessionManager {
      * Check if window has logged in user.
      */
     public static boolean isLoggedIn(Stage stage) {
-        UserSession session = windowSessions.get(stage);
+        UserSession session = getActiveSession(stage);
         return session != null && session.getUser() != null;
     }
 
@@ -190,7 +220,7 @@ public class SessionManager {
     public static boolean hasRole(String roleNameFragment) {
         if (activeStage == null)
             return false;
-        UserSession session = windowSessions.get(activeStage);
+        UserSession session = getActiveSession(activeStage);
         return session != null && session.hasRole(roleNameFragment);
     }
 
@@ -210,6 +240,7 @@ public class SessionManager {
      * Get count of active sessions (logged in windows).
      */
     public static int getActiveSessionCount() {
+        windowSessions.entrySet().removeIf(entry -> entry.getValue().isExpired());
         return (int) windowSessions.values().stream()
                 .filter(s -> s.getUser() != null)
                 .count();
@@ -223,5 +254,32 @@ public class SessionManager {
         if (activeStage == stage) {
             activeStage = null;
         }
+    }
+
+    public static void setSessionTimeoutMinutes(long minutes) {
+        if (minutes <= 0) {
+            sessionTimeout = Duration.ZERO;
+            return;
+        }
+        sessionTimeout = Duration.ofMinutes(minutes);
+    }
+
+    private static UserSession getActiveSession(Stage stage) {
+        if (stage == null) {
+            return null;
+        }
+        UserSession session = windowSessions.get(stage);
+        if (session == null) {
+            return null;
+        }
+        if (session.isExpired()) {
+            windowSessions.remove(stage);
+            if (activeStage == stage) {
+                activeStage = null;
+            }
+            return null;
+        }
+        session.touch();
+        return session;
     }
 }

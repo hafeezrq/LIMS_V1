@@ -5,6 +5,7 @@ import com.qdc.lims.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -21,14 +22,23 @@ public class AuthService {
     public boolean authenticate(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username);
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            // Use BCrypt password matching
-            if (passwordEncoder.matches(password, user.getPassword())) {
-                return true;
-            }
+        if (userOpt.isEmpty()) {
+            return false;
         }
-        return false;
+
+        User user = userOpt.get();
+        if (!user.isActive() || !user.isAccountNonExpired() || !user.isAccountNonLocked()
+                || !user.isCredentialsNonExpired()) {
+            return false;
+        }
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return false;
+        }
+
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+        return true;
     }
 
     public User getUser(String username) {

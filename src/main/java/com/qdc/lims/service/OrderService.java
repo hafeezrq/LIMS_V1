@@ -96,12 +96,17 @@ public class OrderService {
                 .distinct()
                 .toList();
 
+        if (allTests.isEmpty()) {
+            throw new RuntimeException("At least one test must be selected to create an order.");
+        }
+
         for (TestDefinition test : allTests) {
             // A. Create Empty Result Slot
             LabResult result = new LabResult();
             result.setLabOrder(order);
             result.setTestDefinition(test);
             result.setResultValue(""); // Waiting for Lab Tech
+            result.setStatus("PENDING");
             order.getResults().add(result);
 
             // B. Add Price to Bill

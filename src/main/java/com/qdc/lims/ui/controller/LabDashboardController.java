@@ -148,8 +148,8 @@ public class LabDashboardController {
     private void loadDashboardStats() {
         try {
             // Pending = anything NOT completed and NOT cancelled (same logic as Reception)
-            long pendingCount = labOrderRepository.countByStatusNotAndStatusNot("COMPLETED", "CANCELLED");
-            long completedCount = labOrderRepository.countByStatus("COMPLETED");
+            long pendingCount = labOrderRepository.countPendingWithResults();
+            long completedCount = labOrderRepository.countCompletedWithResults();
 
             pendingCountLabel.setText(String.valueOf(pendingCount));
             completedCountLabel.setText(String.valueOf(completedCount));

@@ -23,10 +23,13 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicyService passwordPolicyService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            PasswordPolicyService passwordPolicyService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.passwordPolicyService = passwordPolicyService;
     }
 
     /**
@@ -86,6 +89,10 @@ public class UserService implements UserDetailsService {
             throw new RuntimeException("Username already exists: " + user.getUsername());
         }
 
+        passwordPolicyService.validate(user.getPassword()).ifPresent(msg -> {
+            throw new RuntimeException(msg);
+        });
+
         // Encode password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -97,6 +104,13 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public User updateUser(User user) {
+        String password = user.getPassword();
+        if (password != null && !password.isBlank() && !isBcryptHash(password)) {
+            passwordPolicyService.validate(password).ifPresent(msg -> {
+                throw new RuntimeException(msg);
+            });
+            user.setPassword(passwordEncoder.encode(password));
+        }
         return userRepository.save(user);
     }
 
@@ -108,6 +122,9 @@ public class UserService implements UserDetailsService {
      */
     @Transactional
     public void changePassword(Long userId, String newRawPassword) {
+        passwordPolicyService.validate(newRawPassword).ifPresent(msg -> {
+            throw new RuntimeException(msg);
+        });
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -166,5 +183,9 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void deleteUser(Long userId) {
         userRepository.deleteById(userId);
+    }
+
+    private boolean isBcryptHash(String value) {
+        return value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$");
     }
 }

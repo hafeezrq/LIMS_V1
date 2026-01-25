@@ -277,7 +277,7 @@ public class AdminDashboardController {
 
     @FXML
     private void handleTestCategories() {
-        openAdminWindow("/fxml/category_management.fxml", "Test Category Management");
+        openAdminWindow("/fxml/category_management.fxml", "Department Management");
     }
 
     @FXML

@@ -1,10 +1,11 @@
 package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.InventoryItem;
+import com.qdc.lims.entity.TestConsumption;
 import com.qdc.lims.entity.TestDefinition;
-import com.qdc.lims.entity.TestRecipe;
 import com.qdc.lims.repository.InventoryItemRepository;
-import com.qdc.lims.repository.TestRecipeRepository;
+import com.qdc.lims.repository.TestConsumptionRepository;
+import com.qdc.lims.service.TestDefinitionService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -22,38 +23,63 @@ public class TestRecipeController {
     @FXML
     private Label testNameLabel;
     @FXML
-    private TableView<TestRecipe> recipeTable;
+    private ComboBox<TestDefinition> testDefinitionComboBox;
     @FXML
-    private TableColumn<TestRecipe, String> itemNameColumn;
+    private TableView<TestConsumption> recipeTable;
     @FXML
-    private TableColumn<TestRecipe, Double> quantityColumn;
+    private TableColumn<TestConsumption, String> itemNameColumn;
     @FXML
-    private TableColumn<TestRecipe, String> unitColumn;
+    private TableColumn<TestConsumption, Double> quantityColumn;
+    @FXML
+    private TableColumn<TestConsumption, String> unitColumn;
 
     @FXML
     private ComboBox<InventoryItem> inventoryItemComboBox;
     @FXML
     private TextField quantityField;
+    @FXML
+    private Label statusLabel;
 
-    private final TestRecipeRepository recipeRepository;
+    private final TestConsumptionRepository consumptionRepository;
     private final InventoryItemRepository inventoryRepository;
+    private final TestDefinitionService testDefinitionService;
 
     private TestDefinition currentTest;
 
-    public TestRecipeController(TestRecipeRepository recipeRepository, InventoryItemRepository inventoryRepository) {
-        this.recipeRepository = recipeRepository;
+    public TestRecipeController(TestConsumptionRepository consumptionRepository,
+            InventoryItemRepository inventoryRepository,
+            TestDefinitionService testDefinitionService) {
+        this.consumptionRepository = consumptionRepository;
         this.inventoryRepository = inventoryRepository;
+        this.testDefinitionService = testDefinitionService;
     }
 
     @FXML
     public void initialize() {
         // Table Config
         itemNameColumn.setCellValueFactory(
-                cell -> new SimpleStringProperty(cell.getValue().getInventoryItem().getItemName()));
+                cell -> new SimpleStringProperty(cell.getValue().getItem().getItemName()));
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        unitColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getInventoryItem().getUnit()));
+        unitColumn.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getItem().getUnit()));
 
         // Combo Config
+        testDefinitionComboBox.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(TestDefinition test) {
+                if (test == null) {
+                    return null;
+                }
+                String dept = test.getDepartment() != null ? test.getDepartment().getName() : "No Dept";
+                return test.getTestName() + " (" + dept + ")";
+            }
+
+            @Override
+            public TestDefinition fromString(String string) {
+                return null;
+            }
+        });
+        testDefinitionComboBox.valueProperty().addListener((obs, oldVal, newVal) -> setTestDefinition(newVal));
+
         inventoryItemComboBox.setConverter(new StringConverter<InventoryItem>() {
             @Override
             public String toString(InventoryItem item) {
@@ -67,7 +93,11 @@ public class TestRecipeController {
             }
         });
 
+        loadTests();
         loadInventoryItems();
+        if (statusLabel != null) {
+            statusLabel.setText("");
+        }
     }
 
     public void setTestDefinition(TestDefinition test) {
@@ -75,17 +105,34 @@ public class TestRecipeController {
         if (test != null) {
             testNameLabel.setText("Test: " + test.getTestName());
             loadRecipes();
+            setStatus("Loaded recipe items for " + test.getTestName() + ".");
+        } else {
+            testNameLabel.setText("Test: (select a test)");
+            recipeTable.getItems().clear();
+            setStatus("Select a test definition to manage its recipe.");
         }
     }
 
+    private void loadTests() {
+        testDefinitionComboBox.setItems(
+                FXCollections.observableArrayList(testDefinitionService.findAll().stream()
+                        .filter(t -> t.getActive() == null || t.getActive())
+                        .sorted(java.util.Comparator.comparing(TestDefinition::getTestName, String.CASE_INSENSITIVE_ORDER))
+                        .toList()));
+    }
+
     private void loadInventoryItems() {
-        inventoryItemComboBox.setItems(FXCollections.observableArrayList(inventoryRepository.findAll()));
+        inventoryItemComboBox.setItems(FXCollections.observableArrayList(
+                inventoryRepository.findAll().stream()
+                        .filter(item -> item.isActive())
+                        .sorted(java.util.Comparator.comparing(InventoryItem::getItemName, String.CASE_INSENSITIVE_ORDER))
+                        .toList()));
     }
 
     private void loadRecipes() {
         if (currentTest == null)
             return;
-        recipeTable.setItems(FXCollections.observableArrayList(recipeRepository.findByTestId(currentTest.getId())));
+        recipeTable.setItems(FXCollections.observableArrayList(consumptionRepository.findByTestId(currentTest.getId())));
     }
 
     @FXML
@@ -113,22 +160,23 @@ public class TestRecipeController {
             return;
         }
 
-        TestRecipe recipe = new TestRecipe();
+        TestConsumption recipe = consumptionRepository.findByTestAndItem(currentTest, selectedItem)
+                .orElseGet(TestConsumption::new);
         recipe.setTest(currentTest);
-        recipe.setInventoryItem(selectedItem);
+        recipe.setItem(selectedItem);
         recipe.setQuantity(quantity);
-
-        recipeRepository.save(recipe);
+        consumptionRepository.save(recipe);
 
         // Reset form and reload
         quantityField.clear();
         inventoryItemComboBox.getSelectionModel().clearSelection();
         loadRecipes();
+        setStatus("Saved recipe item: " + selectedItem.getItemName());
     }
 
     @FXML
     private void handleRemove() {
-        TestRecipe selected = recipeTable.getSelectionModel().getSelectedItem();
+        TestConsumption selected = recipeTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             showAlert("Selection Error", "Please select a recipe item to remove.");
             return;
@@ -136,11 +184,12 @@ public class TestRecipeController {
 
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirm Remove");
-        alert.setHeaderText("Remove " + selected.getInventoryItem().getItemName() + " from recipe?");
+        alert.setHeaderText("Remove " + selected.getItem().getItemName() + " from recipe?");
 
         if (alert.showAndWait().get() == ButtonType.OK) {
-            recipeRepository.delete(selected);
+            consumptionRepository.delete(selected);
             loadRecipes();
+            setStatus("Removed recipe item.");
         }
     }
 
@@ -156,5 +205,11 @@ public class TestRecipeController {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    private void setStatus(String message) {
+        if (statusLabel != null) {
+            statusLabel.setText(message);
+        }
     }
 }
