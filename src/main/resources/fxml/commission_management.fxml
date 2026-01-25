@@ -8,7 +8,7 @@
 <?import javafx.collections.FXCollections?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.CommissionManagementController"
+            fx:controller="com.qdc.lims.ui.controller.CommissionManagementController"
             prefHeight="700.0" prefWidth="1200.0" styleClass="root-pane">
     
     <top>

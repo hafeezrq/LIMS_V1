@@ -58,6 +58,13 @@ public interface LabOrderRepository extends JpaRepository<LabOrder, Long> {
     List<LabOrder> findByIsReportDeliveredTrueAndDeliveryDateBetween(LocalDateTime start, LocalDateTime end);
 
     /**
+     * Finds orders marked for report reprint.
+     *
+     * @return list of LabOrders requiring reprint
+     */
+    List<LabOrder> findByReprintRequiredTrue();
+
+    /**
      * Finds all orders created within a specific date range.
      *
      * @param start the start of the order date range
@@ -74,6 +81,33 @@ public interface LabOrderRepository extends JpaRepository<LabOrder, Long> {
      * @return the count of LabOrders within the date range
      */
     long countByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Counts orders by status.
+     *
+     * @param status the order status
+     * @return count of orders with that status
+     */
+    long countByStatus(String status);
+
+    /**
+     * Counts orders excluding two statuses.
+     *
+     * @param status1 first status to exclude
+     * @param status2 second status to exclude
+     * @return count of orders not matching either status
+     */
+    long countByStatusNotAndStatusNot(String status1, String status2);
+
+    /**
+     * Counts orders by status within a date range.
+     *
+     * @param status the order status
+     * @param start  range start
+     * @param end    range end
+     * @return count of orders with status in range
+     */
+    long countByStatusAndOrderDateBetween(String status, LocalDateTime start, LocalDateTime end);
 
     /**
      * Finds orders that have an outstanding balance due.

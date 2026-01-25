@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.ReceptionDashboardController"
+            fx:controller="com.qdc.lims.ui.controller.ReceptionDashboardController"
             fx:id="mainContainer">
     
     <!-- Top Header Bar -->
@@ -39,6 +39,7 @@
                 <Menu text="Reports">
                     <MenuItem text="Ready for Pickup" onAction="#handleShowReadyOrders"/>
                     <MenuItem text="Pending in Lab" onAction="#handleShowPendingOrders"/>
+                    <MenuItem text="Delivered Reports" onAction="#handleShowDeliveredOrders"/>
                 </Menu>
             </MenuBar>
         </VBox>
@@ -112,6 +113,8 @@
                     <TextField fx:id="searchField" promptText="Search by MRN or Patient Name..." prefWidth="250"/>
                     <Button text="Search" onAction="#handleSearchInTable"
                             style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 5 15;"/>
+                    <Button text="Clear" onAction="#handleRefresh"
+                            style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 5 15;"/>
                 </HBox>
                 
                 <TabPane fx:id="ordersTabPane" VBox.vgrow="ALWAYS">
@@ -149,6 +152,35 @@
                                 </columns>
                                 <placeholder>
                                     <Label text="No pending orders" style="-fx-text-fill: #7f8c8d;"/>
+                                </placeholder>
+                            </TableView>
+                        </VBox>
+                    </Tab>
+                    
+                    <Tab text="Delivered Reports" closable="false">
+                        <VBox spacing="10" style="-fx-padding: 10;">
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="From:"/>
+                                <DatePicker fx:id="deliveredFromDatePicker" prefWidth="130"/>
+                                <Label text="To:"/>
+                                <DatePicker fx:id="deliveredToDatePicker" prefWidth="130"/>
+                                <TextField fx:id="deliveredSearchField" promptText="Search delivered by MRN or Patient Name..." prefWidth="250"/>
+                                <Button text="Search" onAction="#handleSearchDelivered"
+                                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 5 15;"/>
+                                <Button text="Clear" onAction="#handleRefresh"
+                                        style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-padding: 5 15;"/>
+                            </HBox>
+                            <TableView fx:id="deliveredOrdersTable" VBox.vgrow="ALWAYS">
+                                <columns>
+                                    <TableColumn fx:id="deliveredOrderIdCol" text="Order #" prefWidth="80"/>
+                                    <TableColumn fx:id="deliveredMrnCol" text="MRN" prefWidth="100"/>
+                                    <TableColumn fx:id="deliveredPatientCol" text="Patient Name" prefWidth="180"/>
+                                    <TableColumn fx:id="deliveredOrderDateCol" text="Order Date" prefWidth="130"/>
+                                    <TableColumn fx:id="deliveredDeliveryDateCol" text="Delivered On" prefWidth="130"/>
+                                    <TableColumn fx:id="deliveredActionCol" text="Action" prefWidth="110"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No delivered reports" style="-fx-text-fill: #7f8c8d;"/>
                                 </placeholder>
                             </TableView>
                         </VBox>

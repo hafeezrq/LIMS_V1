@@ -1,6 +1,8 @@
 package com.qdc.lims.service;
 
+import com.qdc.lims.entity.Department;
 import com.qdc.lims.entity.TestDefinition;
+import com.qdc.lims.repository.DepartmentRepository;
 import com.qdc.lims.repository.TestDefinitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,9 @@ public class TestDefinitionService {
 
     @Autowired
     private TestDefinitionRepository testDefinitionRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
     public List<TestDefinition> findAll() {
         return testDefinitionRepository.findAll();
@@ -41,5 +46,9 @@ public class TestDefinitionService {
                 .filter(t -> t.getTestName().toLowerCase().contains(query.toLowerCase()) ||
                         (t.getShortCode() != null && t.getShortCode().toLowerCase().contains(query.toLowerCase())))
                 .toList();
+    }
+
+    public List<Department> findAllDepartments() {
+        return departmentRepository.findAll();
     }
 }

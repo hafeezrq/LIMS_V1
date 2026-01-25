@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
-      fx:controller="com.qdc.lims.desktop.controller.SupplierManagementController"
+      fx:controller="com.qdc.lims.ui.controller.SupplierManagementController"
       spacing="15" prefWidth="600" prefHeight="500" style="-fx-padding: 20;">
     
     <Label text="Supplier Management" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>

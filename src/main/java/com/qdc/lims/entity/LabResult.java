@@ -5,7 +5,8 @@ import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * Entity representing a laboratory test result, including value, abnormality, remarks, and audit trail.
+ * Entity representing a laboratory test result, including value, abnormality,
+ * remarks, and audit trail.
  */
 @Entity
 @Data
@@ -34,5 +35,11 @@ public class LabResult {
     // --- AUDIT TRAIL ---
     private String performedBy; // The Username (e.g., "labtech1")
     private java.time.LocalDateTime performedAt; // Exact timestamp
+
+    private String status; // "PENDING", "COMPLETED"
+
+    public String getStatus() {
+        return status;
+    }
 
 }

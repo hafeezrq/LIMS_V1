@@ -26,6 +26,8 @@ public class SupplierLedger {
     private String description; // e.g. "Inv-999 Purchase" or "Cash Payment"
 
     private String invoiceNumber; // Optional, for cross-checking paper bills
+    private LocalDate invoiceDate;
+    private LocalDate dueDate;
 
     // Money Logic
     private Double billAmount = 0.0; // Money we OWE (Credit) - Increases Balance

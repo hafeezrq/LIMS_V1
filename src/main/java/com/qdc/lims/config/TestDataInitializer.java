@@ -43,12 +43,15 @@ public class TestDataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if (paymentRepo.count() > 0 || orderRepo.count() > 0) {
+        boolean forceSeed = Boolean.parseBoolean(System.getProperty("qdc.seed.force", "false"))
+                || Boolean.parseBoolean(System.getenv().getOrDefault("QDC_SEED_FORCE", "false"));
+
+        if (!forceSeed && (paymentRepo.count() > 0 || orderRepo.count() > 0)) {
             System.out.println("✅ Financial data already exists. Skipping Financial Seeder.");
             return;
         }
 
-        System.out.println("⚡ Seeding Financial Test Data...");
+        System.out.println("⚡ Seeding Financial Test Data..." + (forceSeed ? " (forced)" : ""));
 
         // Ensure base data exists (from DataSeeder)
         List<Doctor> doctors = doctorRepo.findAll();
@@ -70,7 +73,8 @@ public class TestDataInitializer implements CommandLineRunner {
 
         // 2. Generate Past Lab Orders (Income)
         // Orders from last 30 days
-        for (int i = 0; i < 15; i++) {
+        int ordersToCreate = forceSeed ? 25 : 15;
+        for (int i = 0; i < ordersToCreate; i++) {
             Patient p = patients.get(random.nextInt(patients.size()));
             Doctor d = doctors.get(random.nextInt(doctors.size()));
 
@@ -81,12 +85,15 @@ public class TestDataInitializer implements CommandLineRunner {
             LocalDateTime date = LocalDateTime.now().minusDays(random.nextInt(30));
             order.setOrderDate(date);
             order.setDeliveryDate(date.plusDays(1));
-            order.setReportDelivered(true);
+            order.setReportDelivered(random.nextBoolean());
 
             double total = 500.0 + random.nextInt(2000);
             order.setTotalAmount(total);
-            order.setPaidAmount(total); // Fully paid
-            order.setBalanceDue(0.0);
+
+            boolean partial = forceSeed && random.nextBoolean();
+            double paid = partial ? Math.max(0, total - (200 + random.nextInt(600))) : total;
+            order.setPaidAmount(paid);
+            order.setBalanceDue(Math.max(0, total - paid));
             order.setStatus("COMPLETED");
 
             orderRepo.save(order);
@@ -98,16 +105,15 @@ public class TestDataInitializer implements CommandLineRunner {
                 com.setLabOrder(order);
                 com.setTransactionDate(date.toLocalDate());
                 double comAmount = total * (d.getCommissionPercentage() / 100.0);
-                com.setCalculatedAmount(comAmount);
 
                 // Randomly pay some commissions
-                if (random.nextBoolean()) {
+                if (!forceSeed && random.nextBoolean()) {
                     com.setStatus("PAID");
                     com.setPaidAmount(comAmount);
                     com.setPaymentDate(date.toLocalDate().plusDays(2));
                 } else {
-                    com.setStatus("PENDING");
-                    com.setPaidAmount(0.0);
+                    com.setStatus("UNPAID");
+                    com.setPaidAmount(forceSeed ? comAmount * 0.3 : 0.0);
                 }
                 commissionRepo.save(com);
             }
@@ -121,14 +127,22 @@ public class TestDataInitializer implements CommandLineRunner {
 
         // 4. Generate Supplier Payments
         if (!suppliers.isEmpty()) {
-            for (int i = 0; i < 5; i++) {
+            int supplierEntries = forceSeed ? 10 : 5;
+            for (int i = 0; i < supplierEntries; i++) {
                 Supplier s = suppliers.get(random.nextInt(suppliers.size()));
                 SupplierLedger sl = new SupplierLedger();
                 sl.setSupplier(s);
-                sl.setTransactionDate(LocalDateTime.now().minusDays(random.nextInt(20)).toLocalDate());
-                sl.setBillAmount(5000.0 + random.nextInt(5000));
-                sl.setPaidAmount(sl.getBillAmount()); // Fully paid
-                sl.setBalanceDue(0.0);
+                LocalDateTime tx = LocalDateTime.now().minusDays(random.nextInt(20));
+                sl.setTransactionDate(tx.toLocalDate());
+                sl.setInvoiceDate(tx.toLocalDate());
+                sl.setDueDate(tx.toLocalDate().plusDays(15));
+                sl.setInvoiceNumber("INV-" + (2000 + i));
+
+                double bill = 5000.0 + random.nextInt(8000);
+                sl.setBillAmount(bill);
+                double paid = forceSeed && random.nextBoolean() ? bill * 0.5 : bill;
+                sl.setPaidAmount(paid);
+                sl.setBalanceDue(Math.max(0, bill - paid));
                 sl.setRemarks("Inventory Purchase #" + (1000 + i));
 
                 supplierLedgerRepo.save(sl);

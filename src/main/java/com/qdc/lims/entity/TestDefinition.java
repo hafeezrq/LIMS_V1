@@ -1,45 +1,50 @@
 package com.qdc.lims.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import java.math.BigDecimal;
+import java.util.List;
 
-/**
- * Entity representing a laboratory test definition, including pricing, ranges,
- * and consumption recipes.
- */
 @Entity
+@Table(name = "test_definition")
 @Data
-@Table(name = "test_definitions")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TestDefinition {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String testName;
 
     private String shortCode;
 
-    private String category; // Test category for grouping (e.g., Hematology, Biochemistry)
-
-    private Double price;
+    @ManyToOne
+    @JoinColumn(name = "department_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Department department;
 
     private String unit;
 
-    private String department;
+    private BigDecimal minRange;
+    private BigDecimal maxRange;
+    private BigDecimal price;
 
-    private Double minRange;
-    private Double maxRange;
+    private Boolean active = true;
 
-    @Column(nullable = false)
-    private boolean active = true;
+    // Many-to-many with Panel
+    @ManyToMany(mappedBy = "tests")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Panel> panels;
 
-    @OneToMany(mappedBy = "test", cascade = CascadeType.ALL)
-    private java.util.List<ReferenceRange> ranges = new java.util.ArrayList<>();
-
-    @OneToMany(mappedBy = "test", cascade = CascadeType.ALL)
-    private java.util.List<TestRecipe> recipes = new java.util.ArrayList<>();
-
-    // MAKE SURE THERE ARE NO INVENTORY FIELDS HERE!
+    // One-to-many with ReferenceRange
+    @OneToMany(mappedBy = "test", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ReferenceRange> ranges;
 }

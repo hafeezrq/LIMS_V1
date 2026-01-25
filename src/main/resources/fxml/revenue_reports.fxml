@@ -6,7 +6,7 @@
 <?import javafx.scene.text.Font?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.RevenueReportsController"
+            fx:controller="com.qdc.lims.ui.controller.RevenueReportsController"
             prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #f5f6fa;">
 
     <top>
@@ -31,35 +31,63 @@
                 <DatePicker fx:id="startDatePicker" prefWidth="150" />
                 <Label text="To:" />
                 <DatePicker fx:id="endDatePicker" prefWidth="150" />
+                <Button text="Today" onAction="#handleQuickToday" style="-fx-background-color: #ecf0f1;" />
+                <Button text="7 Days" onAction="#handleQuickWeek" style="-fx-background-color: #ecf0f1;" />
+                <Button text="This Month" onAction="#handleQuickMonth" style="-fx-background-color: #ecf0f1;" />
                 <CheckBox fx:id="outstandingOnlyBox" text="Outstanding Only"/>
                 <Button text="Generate Report" onAction="#handleGenerateReport" style="-fx-background-color: #3498db; -fx-text-fill: white;" />
-                
-                <Region HBox.hgrow="ALWAYS" />
-                
-                <VBox alignment="CENTER_RIGHT">
-                    <Label text="Total Revenue" textFill="#7f8c8d" font="$x1"><font><Font size="10" fx:id="x1"/></font></Label>
-                    <Label fx:id="totalRevenueLabel" text="0.00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #27ae60;" />
-                </VBox>
-                <Separator orientation="VERTICAL" />
-                 <VBox alignment="CENTER_RIGHT">
-                    <Label text="Orders" textFill="#7f8c8d" font="$x1" />
-                    <Label fx:id="totalCountLabel" text="0" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
-                </VBox>
+                <Button text="Open P&amp;L Statement" onAction="#handleOpenProfitLoss" style="-fx-background-color: #95a5a6; -fx-text-fill: white;" />
             </HBox>
 
+            <!-- Summary -->
+            <VBox spacing="10">
+                <Label fx:id="periodLabel" text="Select a date range to generate the report." style="-fx-text-fill: #7f8c8d;"/>
+                <HBox spacing="15">
+                    <VBox spacing="4" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                        <Label text="Patient Billing (Total)" textFill="#7f8c8d"/>
+                        <Label fx:id="totalRevenueLabel" text="0.00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #27ae60;" />
+                    </VBox>
+                    <VBox spacing="4" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                        <Label text="Patient Payments (Received)" textFill="#7f8c8d"/>
+                        <Label fx:id="totalPaidLabel" text="0.00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2980b9;" />
+                    </VBox>
+                    <VBox spacing="4" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                        <Label text="Outstanding Patient Balance" textFill="#7f8c8d"/>
+                        <Label fx:id="totalOutstandingLabel" text="0.00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e67e22;" />
+                    </VBox>
+                    <VBox spacing="4" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                        <Label text="Total Lab Orders" textFill="#7f8c8d"/>
+                        <Label fx:id="totalCountLabel" text="0" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                    </VBox>
+                    <VBox spacing="4" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 12; -fx-background-radius: 6; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 1);" HBox.hgrow="ALWAYS">
+                        <Label text="Avg. Order Value (Patient)" textFill="#7f8c8d"/>
+                        <Label fx:id="averageOrderLabel" text="0.00" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Empty State -->
+            <VBox fx:id="emptyStateBox" spacing="8" alignment="CENTER" style="-fx-background-color: white; -fx-padding: 24; -fx-background-radius: 6; -fx-border-color: #ecf0f1;">
+                <Label text="No report loaded yet." style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+                <Label text="Select a date range and click Generate Report to view details." style="-fx-text-fill: #7f8c8d;"/>
+            </VBox>
+
             <!-- Table -->
-            <TableView fx:id="reportTable" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="orderIdCol" text="ID" prefWidth="60"/>
-                    <TableColumn fx:id="dateCol" text="Date" prefWidth="120"/>
-                    <TableColumn fx:id="patientCol" text="Patient" prefWidth="200"/>
-                    <TableColumn fx:id="amountCol" text="Amount" prefWidth="100"/>
-                    <TableColumn fx:id="statusCol" text="Status" prefWidth="100"/>
-                </columns>
-                <columnResizePolicy>
-                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
-                </columnResizePolicy>
-            </TableView>
+            <VBox fx:id="detailsBox" VBox.vgrow="ALWAYS" visible="false" managed="false">
+                <Label text="Detailed Orders" style="-fx-font-size: 13px; -fx-font-weight: bold;"/>
+                <TableView fx:id="reportTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="orderIdCol" text="ID" prefWidth="60"/>
+                        <TableColumn fx:id="dateCol" text="Date" prefWidth="120"/>
+                        <TableColumn fx:id="patientCol" text="Patient" prefWidth="200"/>
+                        <TableColumn fx:id="amountCol" text="Amount" prefWidth="100"/>
+                        <TableColumn fx:id="statusCol" text="Status" prefWidth="100"/>
+                    </columns>
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                    </columnResizePolicy>
+                </TableView>
+            </VBox>
         </VBox>
     </center>
 

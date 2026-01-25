@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.qdc.lims.desktop.controller.TestDefinitionsController">
+            fx:controller="com.qdc.lims.ui.controller.TestDefinitionsController">
     <!-- Header -->
     <top>
         <VBox spacing="10" style="-fx-padding: 20;">

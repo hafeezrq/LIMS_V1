@@ -36,6 +36,20 @@ public class LabOrder {
 
     private LocalDateTime deliveryDate; // When was it handed over?
 
+    // --- RESULT EDIT / REPRINT AUDIT ---
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean resultsEdited = false;
+    private LocalDateTime resultsEditedAt;
+    private String resultsEditedBy;
+    private String resultsEditReason;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean reprintRequired = false;
+    @Column(columnDefinition = "integer default 0")
+    private Integer reprintCount = 0;
+    private LocalDateTime lastReprintAt;
+    private String lastReprintBy;
+
     // ---------- Update: To incorporate accounting ----------//
     private Double discountAmount = 0.0; // e.g. 100
     private Double taxAmount = 0.0; // (Optional, usually 0 in labs)
@@ -72,6 +86,14 @@ public class LabOrder {
             totalAmount = 0.0;
 
         this.balanceDue = totalAmount - discountAmount - paidAmount;
+    }
+
+    public long getPendingTestCount() {
+        if (results == null)
+            return 0;
+        return results.stream()
+                .filter(r -> "PENDING".equalsIgnoreCase(r.getStatus()))
+                .count();
     }
 
 }

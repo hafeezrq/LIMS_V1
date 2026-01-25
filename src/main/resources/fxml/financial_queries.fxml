@@ -7,7 +7,7 @@
 <?import javafx.scene.text.Font?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.FinancialQueriesController"
+            fx:controller="com.qdc.lims.ui.controller.FinancialQueriesController"
             prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #f5f6fa;">
 
     <top>
@@ -39,17 +39,33 @@
             <HBox spacing="20">
                 <VBox style="-fx-background-color: #27ae60; -fx-padding: 20; -fx-background-radius: 5; -fx-pref-width: 250;">
                      <Label text="Total Income" textFill="WHITE" style="-fx-font-size: 16;"/>
-                     <Label fx:id="totalIncomeLabel" text="$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
+                     <Label fx:id="totalIncomeLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
                 </VBox>
                 
                 <VBox style="-fx-background-color: #c0392b; -fx-padding: 20; -fx-background-radius: 5; -fx-pref-width: 250;">
                      <Label text="Total Expenses" textFill="WHITE" style="-fx-font-size: 16;"/>
-                     <Label fx:id="totalExpenseLabel" text="$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
+                     <Label fx:id="totalExpenseLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
                 </VBox>
                 
                 <VBox fx:id="profitCard" style="-fx-background-color: #2980b9; -fx-padding: 20; -fx-background-radius: 5; -fx-pref-width: 250;">
                      <Label text="Net Profit / Loss" textFill="WHITE" style="-fx-font-size: 16;"/>
-                     <Label fx:id="netProfitLabel" text="$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
+                     <Label fx:id="netProfitLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 28; -fx-font-weight: bold;"/>
+                </VBox>
+            </HBox>
+
+            <!-- Liabilities & Receivables -->
+            <HBox spacing="20">
+                <VBox style="-fx-background-color: #f39c12; -fx-padding: 16; -fx-background-radius: 5; -fx-pref-width: 250;">
+                     <Label text="Outstanding Patient Balances" textFill="WHITE" style="-fx-font-size: 14;"/>
+                     <Label fx:id="patientReceivableLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+                </VBox>
+                <VBox style="-fx-background-color: #d35400; -fx-padding: 16; -fx-background-radius: 5; -fx-pref-width: 250;">
+                     <Label text="Unpaid Doctor Commissions" textFill="WHITE" style="-fx-font-size: 14;"/>
+                     <Label fx:id="unpaidCommissionLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+                </VBox>
+                <VBox style="-fx-background-color: #7f8c8d; -fx-padding: 16; -fx-background-radius: 5; -fx-pref-width: 250;">
+                     <Label text="Supplier Payables" textFill="WHITE" style="-fx-font-size: 14;"/>
+                     <Label fx:id="supplierPayableLabel" text="\$0.00" textFill="WHITE" style="-fx-font-size: 22; -fx-font-weight: bold;"/>
                 </VBox>
             </HBox>
 

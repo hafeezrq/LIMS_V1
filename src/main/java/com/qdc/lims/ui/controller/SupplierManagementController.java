@@ -1,0 +1,145 @@
+package com.qdc.lims.ui.controller;
+
+import com.qdc.lims.entity.Supplier;
+import com.qdc.lims.repository.SupplierRepository;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
+
+@Component
+public class SupplierManagementController {
+
+    @FXML
+    private ListView<Supplier> supplierListView;
+
+    @FXML
+    private TextField companyNameField;
+
+    @FXML
+    private TextField contactPersonField;
+
+    @FXML
+    private TextField mobileField;
+
+    @FXML
+    private TextArea addressArea;
+
+    private final SupplierRepository supplierRepository;
+    private Supplier currentSupplier = null;
+
+    public SupplierManagementController(SupplierRepository supplierRepository) {
+        this.supplierRepository = supplierRepository;
+    }
+
+    @FXML
+    public void initialize() {
+        // Setup ListView
+        supplierListView.setCellFactory(param -> new ListCell<Supplier>() {
+            @Override
+            protected void updateItem(Supplier item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getCompanyName() + " ("
+                            + (item.getContactPerson() != null ? item.getContactPerson() : "N/A") + ")");
+                }
+            }
+        });
+
+        // Listen for selection
+        supplierListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                populateForm(newVal);
+            }
+        });
+
+        loadSuppliers();
+    }
+
+    private void loadSuppliers() {
+        ObservableList<Supplier> suppliers = FXCollections.observableArrayList(supplierRepository.findAll());
+        supplierListView.setItems(suppliers);
+    }
+
+    private void populateForm(Supplier supplier) {
+        currentSupplier = supplier;
+        companyNameField.setText(supplier.getCompanyName());
+        contactPersonField.setText(supplier.getContactPerson());
+        mobileField.setText(supplier.getMobile());
+        addressArea.setText(supplier.getAddress());
+    }
+
+    @FXML
+    private void handleSave() {
+        String name = companyNameField.getText().trim();
+        if (name.isEmpty()) {
+            showAlert("Required", "Company Name is required.");
+            return;
+        }
+
+        if (currentSupplier == null) {
+            currentSupplier = new Supplier();
+        }
+
+        currentSupplier.setCompanyName(name);
+        currentSupplier.setContactPerson(contactPersonField.getText().trim());
+        currentSupplier.setMobile(mobileField.getText().trim());
+        currentSupplier.setAddress(addressArea.getText().trim());
+        currentSupplier.setActive(true);
+
+        supplierRepository.save(currentSupplier);
+
+        // Refresh and clear
+        loadSuppliers();
+        handleClear();
+        showAlert("Success", "Supplier saved successfully.");
+    }
+
+    @FXML
+    private void handleDelete() {
+        Supplier selected = supplierListView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert("Selection Error", "Please select a supplier to delete.");
+            return;
+        }
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Delete Supplier '" + selected.getCompanyName() + "'?");
+        alert.setContentText("This cannot be undone. Checks regarding linked items are not yet fully enforced.");
+
+        if (alert.showAndWait().get() == ButtonType.OK) {
+            supplierRepository.delete(selected);
+            loadSuppliers();
+            handleClear();
+        }
+    }
+
+    @FXML
+    private void handleClear() {
+        currentSupplier = null;
+        companyNameField.clear();
+        contactPersonField.clear();
+        mobileField.clear();
+        addressArea.clear();
+        supplierListView.getSelectionModel().clearSelection();
+    }
+
+    @FXML
+    private void handleClose() {
+        Stage stage = (Stage) supplierListView.getScene().getWindow();
+        stage.close();
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+}

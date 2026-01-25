@@ -7,7 +7,7 @@ import com.qdc.lims.entity.TestDefinition;
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.repository.LabResultRepository;
 
-import com.qdc.lims.desktop.CurrentUserProvider;
+import com.qdc.lims.ui.CurrentUserProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,14 +55,13 @@ public class ResultService {
 
         // 3. Auto-Validation Logic
         try {
-            // Try to convert string "150" to number 150.0
-            double val = Double.parseDouble(request.value());
+            java.math.BigDecimal val = new java.math.BigDecimal(request.value());
 
             if (test.getMinRange() != null && test.getMaxRange() != null) {
-                if (val < test.getMinRange()) {
+                if (val.compareTo(test.getMinRange()) < 0) {
                     result.setAbnormal(true);
                     result.setRemarks("LOW");
-                } else if (val > test.getMaxRange()) {
+                } else if (val.compareTo(test.getMaxRange()) > 0) {
                     result.setAbnormal(true);
                     result.setRemarks("HIGH");
                 } else {
@@ -79,7 +78,8 @@ public class ResultService {
     }
 
     /**
-     * Saves all lab results from a form, applies validation and audit logic, and updates order status.
+     * Saves all lab results from a form, applies validation and audit logic, and
+     * updates order status.
      *
      * @param orderForm the LabOrder containing results to save
      */
@@ -93,65 +93,61 @@ public class ResultService {
             throw new RuntimeException("⛔ ILLEGAL ACTION: Cannot modify results after report delivery.");
         }
 
-        // 1. Get Current User (The Technician)
+        // 1. Get Current User
         String currentUser = currentUserProvider.getUsername();
 
         // Loop through the results submitted from the screen
         for (LabResult resultFromForm : orderForm.getResults()) {
 
-            // Fetch the real result from DB to ensure we don't lose links
+            // Fetch the real result from DB
             LabResult dbResult = repository.findById(resultFromForm.getId()).orElseThrow();
-
-            // Update the value
             String val = resultFromForm.getResultValue();
-            dbResult.setResultValue(val);
 
-            // --- AUDIT STAMP ---
-            // Only update if the value changed or is new
-            if (resultFromForm.getResultValue() != null && !resultFromForm.getResultValue().isEmpty()) {
+            // =========================================================
+            // FIX START: Only update if the new value is NOT Empty/Null
+            // =========================================================
+            if (val != null && !val.trim().isEmpty()) {
+
+                dbResult.setResultValue(val);
+
+                // Audit Stamp
                 dbResult.setPerformedBy(currentUser);
                 dbResult.setPerformedAt(LocalDateTime.now());
-            }
-            // ------------------------
 
-            // Apply High/Low Logic
-            TestDefinition test = dbResult.getTestDefinition();
-            
-            try {
-                if (val != null && !val.isEmpty()) {
+                // --- Apply High/Low Logic (Moved inside the check) ---
+                TestDefinition test = dbResult.getTestDefinition();
+
+                try {
                     // 2. Parse Number
-                    double numVal = Double.parseDouble(val);
+                    java.math.BigDecimal numVal = new java.math.BigDecimal(val);
 
-                    // 3. Get Patient 
+                    // 3. Get Patient
                     com.qdc.lims.entity.Patient patient = dbResult.getLabOrder().getPatient();
 
-                    // 4. Find Matching Rule (The New Logic)
+                    // 4. Find Matching Rule
                     com.qdc.lims.entity.ReferenceRange matchingRule = null;
-                    
-                    // Check if ranges exist (avoid null pointer if list is empty)
+
                     if (test.getRanges() != null) {
                         for (com.qdc.lims.entity.ReferenceRange rule : test.getRanges()) {
-                            // Check Gender ("Both", "Male", "Female")
-                            boolean genderMatch = rule.getGender().equalsIgnoreCase("Both") 
-                                               || rule.getGender().equalsIgnoreCase(patient.getGender());
-                            
-                            // Check Age
-                            boolean ageMatch = patient.getAge() >= rule.getMinAge() 
-                                            && patient.getAge() <= rule.getMaxAge();
-    
+                            boolean genderMatch = rule.getGender().equalsIgnoreCase("Both")
+                                    || rule.getGender().equalsIgnoreCase(patient.getGender());
+
+                            boolean ageMatch = patient.getAge() >= rule.getMinAge()
+                                    && patient.getAge() <= rule.getMaxAge();
+
                             if (genderMatch && ageMatch) {
                                 matchingRule = rule;
-                                break; // Found the specific rule for this person
+                                break;
                             }
                         }
                     }
 
-                    // 5. Apply High/Low Logic based on the rule found
+                    // 5. Apply High/Low Logic
                     if (matchingRule != null) {
-                        if (numVal < matchingRule.getMinVal()) {
+                        if (numVal.compareTo(matchingRule.getMinVal()) < 0) {
                             dbResult.setAbnormal(true);
                             dbResult.setRemarks("LOW");
-                        } else if (numVal > matchingRule.getMaxVal()) {
+                        } else if (numVal.compareTo(matchingRule.getMaxVal()) > 0) {
                             dbResult.setAbnormal(true);
                             dbResult.setRemarks("HIGH");
                         } else {
@@ -159,28 +155,123 @@ public class ResultService {
                             dbResult.setRemarks("Normal");
                         }
                     } else {
-                        // Fallback: If no specific Age/Gender rule found, assume Normal
-                        // (Or you could check the old min/max fields if you kept them as backup)
                         dbResult.setAbnormal(false);
-                        dbResult.setRemarks(""); 
+                        dbResult.setRemarks("");
                     }
+                } catch (NumberFormatException e) {
+                    // Handle Non-Numeric Results (Text like "Positive")
+                    dbResult.setAbnormal(false);
+                    dbResult.setRemarks("");
                 }
-            } catch (NumberFormatException e) {
-                // Handle Non-Numeric Results (Text like "Positive")
-                dbResult.setAbnormal(false);
-                dbResult.setRemarks("");
+
+                // Save only the modified result
+                repository.save(dbResult);
             }
-
-
-            repository.save(dbResult);
+            // =========================================================
+            // FIX END
+            // =========================================================
         }
 
-        // --- NEW LOGIC: Update Order Status ---
-        // We assume if the tech clicked "Save", the order is done.
-        com.qdc.lims.entity.LabOrder dbOrder = orderRepo.findById(orderForm.getId()).orElseThrow();
-        dbOrder.setStatus("COMPLETED");
-        orderRepo.save(dbOrder);
+        // --- LOGIC UPDATE: Only Mark "COMPLETED" if ALL tests are done ---
+        // (Optional improvement: Prevent partial orders being marked complete)
+        LabOrder dbOrder = orderRepo.findById(orderForm.getId()).orElseThrow();
 
+        boolean allTestsDone = dbOrder.getResults().stream()
+                .allMatch(r -> r.getResultValue() != null && !r.getResultValue().trim().isEmpty());
+
+        if (allTestsDone) {
+            dbOrder.setStatus("COMPLETED");
+        } else {
+            dbOrder.setStatus("IN_PROGRESS");
+        }
+        orderRepo.save(dbOrder);
+    }
+
+    /**
+     * Saves edits to results for a completed order and records audit metadata.
+     *
+     * @param orderForm   the LabOrder containing edited results
+     * @param editReason  reason for editing (required if already delivered)
+     */
+    @Transactional
+    public void saveEditedResults(LabOrder orderForm, String editReason) {
+        LabOrder labOrder = orderRepo.findById(orderForm.getId())
+                .orElseThrow(() -> new RuntimeException("The Order not found"));
+
+        if (!"COMPLETED".equals(labOrder.getStatus())) {
+            throw new RuntimeException("Only completed orders can be edited here.");
+        }
+
+        if (labOrder.isReportDelivered()) {
+            if (editReason == null || editReason.trim().isEmpty()) {
+                throw new RuntimeException("Edit reason is required after report delivery.");
+            }
+        }
+
+        String currentUser = currentUserProvider.getUsername();
+
+        for (LabResult resultFromForm : orderForm.getResults()) {
+            LabResult dbResult = repository.findById(resultFromForm.getId()).orElseThrow();
+            String val = resultFromForm.getResultValue();
+
+            if (val != null && !val.trim().isEmpty()) {
+                dbResult.setResultValue(val);
+                dbResult.setPerformedBy(currentUser);
+                dbResult.setPerformedAt(LocalDateTime.now());
+
+                TestDefinition test = dbResult.getTestDefinition();
+                try {
+                    java.math.BigDecimal numVal = new java.math.BigDecimal(val);
+                    com.qdc.lims.entity.Patient patient = dbResult.getLabOrder().getPatient();
+
+                    com.qdc.lims.entity.ReferenceRange matchingRule = null;
+                    if (test.getRanges() != null) {
+                        for (com.qdc.lims.entity.ReferenceRange rule : test.getRanges()) {
+                            boolean genderMatch = rule.getGender().equalsIgnoreCase("Both")
+                                    || rule.getGender().equalsIgnoreCase(patient.getGender());
+                            boolean ageMatch = patient.getAge() >= rule.getMinAge()
+                                    && patient.getAge() <= rule.getMaxAge();
+                            if (genderMatch && ageMatch) {
+                                matchingRule = rule;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (matchingRule != null) {
+                        if (numVal.compareTo(matchingRule.getMinVal()) < 0) {
+                            dbResult.setAbnormal(true);
+                            dbResult.setRemarks("LOW");
+                        } else if (numVal.compareTo(matchingRule.getMaxVal()) > 0) {
+                            dbResult.setAbnormal(true);
+                            dbResult.setRemarks("HIGH");
+                        } else {
+                            dbResult.setAbnormal(false);
+                            dbResult.setRemarks("Normal");
+                        }
+                    } else {
+                        dbResult.setAbnormal(false);
+                        dbResult.setRemarks("");
+                    }
+                } catch (NumberFormatException e) {
+                    dbResult.setAbnormal(false);
+                    dbResult.setRemarks("");
+                }
+
+                repository.save(dbResult);
+            }
+        }
+
+        labOrder.setResultsEdited(true);
+        labOrder.setResultsEditedAt(LocalDateTime.now());
+        labOrder.setResultsEditedBy(currentUser);
+        labOrder.setResultsEditReason(editReason);
+
+        if (labOrder.isReportDelivered()) {
+            labOrder.setReprintRequired(true);
+        }
+
+        orderRepo.save(labOrder);
     }
 
 }

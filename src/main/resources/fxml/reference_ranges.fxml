@@ -6,7 +6,7 @@
 <?import javafx.scene.text.Font?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.ReferenceRangeController"
+            fx:controller="com.qdc.lims.ui.controller.ReferenceRangeController"
             prefHeight="500.0" prefWidth="700.0">
     
     <top>

@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 /**
- * Entity representing age and gender-specific reference ranges for lab test results.
+ * Entity representing age and gender-specific reference ranges for lab test
+ * results.
  * Used for automatic flagging of abnormal values based on patient demographics.
  */
 @Entity
@@ -20,10 +21,10 @@ public class ReferenceRange {
     private TestDefinition test;
 
     private String gender; // "Male", "Female", "Both"
-    
+
     private Integer minAge; // e.g. 0
     private Integer maxAge; // e.g. 100 (in Years)
 
-    private Double minVal; // The Low Limit
-    private Double maxVal; // The High Limit
+    private java.math.BigDecimal minVal; // The Low Limit
+    private java.math.BigDecimal maxVal; // The High Limit
 }

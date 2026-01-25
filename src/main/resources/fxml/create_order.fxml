@@ -5,8 +5,8 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.CreateOrderController"
-            prefWidth="900" prefHeight="800"
+            fx:controller="com.qdc.lims.ui.controller.CreateOrderController"
+            prefWidth="1200" prefHeight="900"
             stylesheets="@/static/styles.css">
     
     <!-- Header -->
@@ -19,92 +19,92 @@
     
     <!-- Main Content -->
     <center>
-        <VBox spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;" VBox.vgrow="ALWAYS">
-                
-                <!-- Patient Selection -->
-                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
-                    <Label text="1. Select Patient" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-                    <Separator/>
+        <!-- FIX 1: Wrapped everything in a ScrollPane with fitToWidth=true -->
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" hbarPolicy="NEVER">
+            <content>
+                <VBox spacing="15" style="-fx-background-color: #f5f5f5; -fx-padding: 20;">
                     
-                    <HBox spacing="15" alignment="CENTER_LEFT">
-                        <Label text="Search Patient by MRN or Name:" style="-fx-font-weight: bold;"/>
-                        <TextField fx:id="patientSearchField" promptText="Enter MRN or name..." prefWidth="300"/>
-                        <Button text="Search" onAction="#handleSearchPatient" 
-                                styleClass="btn-primary"/>
-                    </HBox>
-                    
-                    <VBox fx:id="patientInfoBox" spacing="5" visible="false" managed="false"
-                          style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
-                        <Label fx:id="patientNameLabel" style="-fx-font-size: 14; -fx-font-weight: bold;"/>
-                        <Label fx:id="patientDetailsLabel" style="-fx-font-size: 12;"/>
+                    <!-- Patient Selection -->
+                    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                        <Label text="1. Select Patient" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                        <Separator/>
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="Search Patient by MRN or Name:" style="-fx-font-weight: bold;"/>
+                            <TextField fx:id="patientSearchField" promptText="Enter MRN or name..." prefWidth="300"/>
+                            <Button text="Search" onAction="#handleSearchPatient" styleClass="btn-primary"/>
+                        </HBox>
+                        <VBox fx:id="patientInfoBox" spacing="5"
+                              style="-fx-background-color: #eaf6fb; -fx-padding: 15; -fx-background-radius: 5; -fx-border-color: #3498db; -fx-border-width: 2;">
+                            <Label fx:id="patientNameLabel" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+                            <Label fx:id="patientDetailsLabel" style="-fx-font-size: 13;"/>
+                        </VBox>
                     </VBox>
-                </VBox>
-                
-                <!-- Doctor Selection -->
-                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
-                    <Label text="2. Referring Doctor (Optional)" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-                    <Separator/>
                     
-                    <HBox spacing="15" alignment="CENTER_LEFT">
-                        <Label text="Select Doctor:" style="-fx-font-weight: bold;"/>
-                        <ComboBox fx:id="doctorComboBox" promptText="-- None / Self --" prefWidth="350"/>
+                    <!-- Doctor Selection -->
+                    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                        <Label text="2. Referring Doctor (Optional)" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                        <Separator/>
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="Select Doctor:" style="-fx-font-weight: bold;"/>
+                            <ComboBox fx:id="doctorComboBox" promptText="-- None / Self --" prefWidth="350"/>
+                        </HBox>
+                    </VBox>
+                    
+                    <!-- Test Selection with Category Tabs -->
+                    <!-- FIX 2: Added VBox.vgrow="ALWAYS" here to ensure it tries to expand -->
+                    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;" VBox.vgrow="ALWAYS">
+                        <Label text="3. Select Tests" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                        <Separator/>
+                        
+                        <!-- Category TabPane -->
+                        <!-- FIX 3: Added minHeight="300". This guarantees the list is visible even if the window is small. -->
+                        <TabPane fx:id="categoryTabPane" tabClosingPolicy="UNAVAILABLE" 
+                                 style="-fx-background-color: #f8f9fa;"
+                                 VBox.vgrow="ALWAYS" minHeight="300" prefHeight="400">
+                            <!-- Tabs will be dynamically populated -->
+                        </TabPane>
+                        
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="Selected Tests:" style="-fx-font-weight: bold;"/>
+                            <Label fx:id="selectedTestsCountLabel" text="0" style="-fx-text-fill: #3498db; -fx-font-weight: bold;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="Total Amount:" style="-fx-font-weight: bold;"/>
+                            <Label fx:id="totalAmountLabel" text="Rs. 0.00" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                        </HBox>
+                        
+                        <!-- List of Selected Tests -->
+                        <ListView fx:id="selectedTestsListView" prefHeight="100" style="-fx-background-radius: 5; -fx-background-color: #f8f9fa;"/>
+                    </VBox>
+                    
+                    <!-- Billing Information -->
+                    <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
+                        <Label text="4. Billing" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                        <Separator/>
+                        
+                        <GridPane hgap="15" vgap="10">
+                            <Label text="Discount (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                            <TextField fx:id="discountField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="150"/>
+                            
+                            <Label text="Cash Paid (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                            <TextField fx:id="cashPaidField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="150"/>
+                            
+                            <Label text="Balance:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
+                            <Label fx:id="balanceLabel" text="Rs. 0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" 
+                                   style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                        </GridPane>
+                    </VBox>
+                    
+                    <!-- Message and Actions -->
+                    <Label fx:id="messageLabel" wrapText="true" style="-fx-font-size: 12;"/>
+                    
+                    <HBox spacing="15" alignment="CENTER">
+                        <Button text="Create Order" onAction="#handleCreateOrder" styleClass="btn-success" prefWidth="160"/>
+                        <Button text="Clear" onAction="#handleClear" styleClass="btn-secondary" prefWidth="120"/>
+                        <Button text="Close" onAction="#handleClose" styleClass="btn-danger" prefWidth="100"/>
                     </HBox>
                 </VBox>
-                
-                <!-- Test Selection with Category Tabs -->
-                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;" VBox.vgrow="ALWAYS">
-                    <Label text="3. Select Tests" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-                    <Separator/>
-                    
-                    <!-- Category TabPane -->
-                    <TabPane fx:id="categoryTabPane" tabClosingPolicy="UNAVAILABLE" 
-                             style="-fx-background-color: #f8f9fa;"
-                             VBox.vgrow="ALWAYS" prefHeight="280">
-                        <!-- Tabs will be dynamically populated from categories -->
-                    </TabPane>
-                    
-                    <HBox spacing="15" alignment="CENTER_LEFT">
-                        <Label text="Selected Tests:" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="selectedTestsCountLabel" text="0" style="-fx-text-fill: #3498db; -fx-font-weight: bold;"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="Total Amount:" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="totalAmountLabel" text="Rs. 0.00" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
-                    </HBox>
-                </VBox>
-                
-                <!-- Billing Information -->
-                <VBox spacing="10" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 8;">
-                    <Label text="4. Billing" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-                    <Separator/>
-                    
-                    <GridPane hgap="15" vgap="10">
-                        <Label text="Discount (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
-                        <TextField fx:id="discountField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="150"/>
-                        
-                        <Label text="Cash Paid (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
-                        <TextField fx:id="cashPaidField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="150"/>
-                        
-                        <Label text="Balance:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
-                        <Label fx:id="balanceLabel" text="Rs. 0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" 
-                               style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
-                    </GridPane>
-                </VBox>
-                
-                <!-- Message and Actions -->
-                <Label fx:id="messageLabel" wrapText="true" style="-fx-font-size: 12;"/>
-                
-                <HBox spacing="15" alignment="CENTER">
-                    <Button text="Create Order" onAction="#handleCreateOrder" 
-                            styleClass="btn-success"
-                            prefWidth="160"/>
-                    <Button text="Clear" onAction="#handleClear" 
-                            styleClass="btn-secondary"
-                            prefWidth="120"/>
-                    <Button text="Close" onAction="#handleClose" 
-                            styleClass="btn-danger"
-                            prefWidth="100"/>
-                </HBox>
-            </VBox>
+            </content>
+        </ScrollPane>
     </center>
     
 </BorderPane>

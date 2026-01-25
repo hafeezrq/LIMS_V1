@@ -1,6 +1,6 @@
 package com.qdc.lims;
 
-import com.qdc.lims.desktop.AppPaths;
+import com.qdc.lims.ui.AppPaths;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -59,7 +59,7 @@ public class DesktopApplication extends Application {
         primaryStage.setOnCloseRequest(event -> {
             // Get the controller to check active sessions
             Object controller = loader.getController();
-            if (controller instanceof com.qdc.lims.desktop.controller.MainWindowController mainController) {
+            if (controller instanceof com.qdc.lims.ui.controller.MainWindowController mainController) {
                 int activeSessions = mainController.getActiveSessionCount();
                 if (activeSessions > 0) {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(

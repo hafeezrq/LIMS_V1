@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.qdc.lims.desktop.controller.BackupSettingsController"
+      fx:controller="com.qdc.lims.ui.controller.BackupSettingsController"
       spacing="15" style="-fx-background-color: #f5f5f5;">
 
     <padding>

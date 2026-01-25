@@ -6,7 +6,7 @@
 <?import javafx.scene.text.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.qdc.lims.desktop.controller.AdminDashboardController"
+            fx:controller="com.qdc.lims.ui.controller.AdminDashboardController"
             fx:id="mainContainer">
     
     <!-- Top Menu Bar -->
@@ -30,49 +30,37 @@
             <MenuBar>
                 <Menu text="User Management">
                     <MenuItem text="Manage Users" onAction="#handleUserManagement"/>
-                    <MenuItem text="User Roles &amp; Permissions" onAction="#handleUserRoles"/>
-                    <MenuItem text="Activity Logs" onAction="#handleActivityLogs"/>
                 </Menu>
                 
                 <Menu text="Inventory Management">
                     <MenuItem text="View Stock" onAction="#handleViewStock"/>
                     <MenuItem text="Suppliers" onAction="#handleSuppliers"/>
-                    <MenuItem text="Purchases &amp; Orders" onAction="#handlePurchases"/>
-                    <MenuItem text="Low Stock Alerts" onAction="#handleLowStock"/>
-                    <MenuItem text="Stock Adjustments" onAction="#handleStockAdjustments"/>
+                    <MenuItem text="Supplier Payables" onAction="#handleSupplierPayables"/>
                 </Menu>
                 
                 <Menu text="Test Configuration">
                     <MenuItem text="Test Definitions" onAction="#handleTestDefinitions"/>
+                    <MenuItem text="Test Categories" onAction="#handleTestCategories"/>
                     <MenuItem text="Test Recipes" onAction="#handleTestRecipes"/>
                     <MenuItem text="Reference Ranges" onAction="#handleReferenceRanges"/>
-                    <MenuItem text="Test Categories" onAction="#handleTestCategories"/>
-                    <MenuItem text="Test Pricing" onAction="#handleTestPricing"/>
                 </Menu>
                 
                 <Menu text="Doctor Management">
                     <MenuItem text="Doctor Panel" onAction="#handleDoctorPanel"/>
                     <MenuItem text="Doctor Commissions" onAction="#handleDoctorCommissions"/>
-                    <MenuItem text="Commission Rates" onAction="#handleCommissionRates"/>
-                    <MenuItem text="Commission Payments" onAction="#handleCommissionPayments"/>
-                    <MenuItem text="Doctor Statistics" onAction="#handleDoctorStats"/>
+                    <MenuItem text="Commission Ledger (By Doctor)" onAction="#handleDoctorCommissionLedger"/>
                 </Menu>
                 
                 <Menu text="Finance &amp; Reports">
-                    <MenuItem text="Daily Revenue" onAction="#handleDailyRevenue"/>
-                    <MenuItem text="Monthly Revenue" onAction="#handleMonthlyRevenue"/>
-                    <MenuItem text="Commission Report" onAction="#handleCommissionReport"/>
+                    <MenuItem text="Revenue Reports" onAction="#handleRevenueReports"/>
                     <MenuItem text="Payment History" onAction="#handlePaymentHistory"/>
-                    <MenuItem text="Outstanding Payments" onAction="#handleOutstandingPayments"/>
                     <MenuItem text="Financial Queries" onAction="#handleFinancialQueries"/>
                     <MenuItem text="Expense Management" onAction="#handleExpenses"/>
                 </Menu>
                 
                 <Menu text="System Settings">
                     <MenuItem text="Backup &amp; Restore" onAction="#handleBackupSettings"/>
-                    <MenuItem text="Database Settings" onAction="#handleDatabaseSettings"/>
                     <MenuItem text="System Configuration" onAction="#handleSystemConfig"/>
-                    <MenuItem text="Report Templates" onAction="#handleReportTemplates"/>
                 </Menu>
             </MenuBar>
         </VBox>

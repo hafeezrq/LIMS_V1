@@ -18,4 +18,5 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
      * Find all active doctors.
      */
     List<Doctor> findByActiveTrue();
+
 }
