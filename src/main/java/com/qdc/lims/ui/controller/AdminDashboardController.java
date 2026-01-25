@@ -7,6 +7,8 @@ import com.qdc.lims.ui.navigation.DashboardType;
 import com.qdc.lims.ui.util.LogoutUtil;
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.service.AdminDashboardStatsService;
+import com.qdc.lims.service.BrandingService;
+import com.qdc.lims.service.LocaleFormatService;
 import com.qdc.lims.entity.User;
 
 import javafx.application.Platform;
@@ -24,7 +26,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * JavaFX controller for the admin dashboard window.
@@ -41,6 +42,8 @@ public class AdminDashboardController {
     private final DashboardNavigator navigator;
     private final DashboardSwitchService dashboardSwitchService;
     private final AdminDashboardStatsService statsService;
+    private final BrandingService brandingService;
+    private final LocaleFormatService localeFormatService;
 
     @FXML
     private Label welcomeLabel;
@@ -56,6 +59,8 @@ public class AdminDashboardController {
     private ComboBox<String> dashboardSwitcher;
     @FXML
     private Label userLabel;
+    @FXML
+    private Label footerBrandLabel;
 
     @FXML
     private Label totalUsersLabel;
@@ -70,12 +75,16 @@ public class AdminDashboardController {
             LabOrderRepository labOrderRepository,
             DashboardNavigator navigator,
             DashboardSwitchService dashboardSwitchService,
-            AdminDashboardStatsService statsService) {
+            AdminDashboardStatsService statsService,
+            BrandingService brandingService,
+            LocaleFormatService localeFormatService) {
         this.applicationContext = applicationContext;
         this.labOrderRepository = labOrderRepository;
         this.navigator = navigator;
         this.dashboardSwitchService = dashboardSwitchService;
         this.statsService = statsService;
+        this.brandingService = brandingService;
+        this.localeFormatService = localeFormatService;
     }
 
     @FXML
@@ -95,6 +104,7 @@ public class AdminDashboardController {
                             DashboardType current = dashboardSwitchService.getDefaultDashboard(stage);
                             // 2. Pass the stage to the setup method
                             dashboardSwitchService.setupDashboardSwitcher(dashboardSwitcher, current, stage);
+                            brandingService.tagStage(stage, DashboardType.ADMIN.getWindowTitle());
                         }
                     });
                 }
@@ -127,6 +137,7 @@ public class AdminDashboardController {
         }
 
         loadDashboardStats();
+        applyBranding();
     }
 
     private void loadDashboardStats() {
@@ -153,11 +164,10 @@ public class AdminDashboardController {
     }
 
     private void startClock() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, MMM dd yyyy - HH:mm:ss");
         Thread clockThread = new Thread(() -> {
             while (true) {
                 try {
-                    String time = LocalDateTime.now().format(formatter);
+                    String time = localeFormatService.formatDateTime(LocalDateTime.now());
                     Platform.runLater(() -> {
                         if (dateTimeLabel != null)
                             dateTimeLabel.setText(time);
@@ -443,7 +453,7 @@ public class AdminDashboardController {
             Parent root = loader.load();
 
             Stage stage = new Stage();
-            stage.setTitle(title);
+            brandingService.tagStage(stage, title);
             if (width != null && height != null) {
                 stage.setScene(new Scene(root, width, height));
             } else {
@@ -463,5 +473,11 @@ public class AdminDashboardController {
             return false;
         }
         return true;
+    }
+
+    private void applyBranding() {
+        if (footerBrandLabel != null) {
+            footerBrandLabel.setText(brandingService.getCopyrightLine());
+        }
     }
 }

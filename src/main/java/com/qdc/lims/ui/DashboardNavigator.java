@@ -3,6 +3,7 @@ package com.qdc.lims.ui;
 import com.qdc.lims.ui.navigation.DashboardSwitchService;
 import com.qdc.lims.ui.navigation.DashboardType;
 import com.qdc.lims.entity.User;
+import com.qdc.lims.service.BrandingService;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -21,10 +22,14 @@ public class DashboardNavigator {
 
     private final ApplicationContext applicationContext;
     private final DashboardSwitchService dashboardSwitchService;
+    private final BrandingService brandingService;
 
-    public DashboardNavigator(ApplicationContext applicationContext, DashboardSwitchService dashboardSwitchService) {
+    public DashboardNavigator(ApplicationContext applicationContext,
+            DashboardSwitchService dashboardSwitchService,
+            BrandingService brandingService) {
         this.applicationContext = applicationContext;
         this.dashboardSwitchService = dashboardSwitchService;
+        this.brandingService = brandingService;
     }
 
     /**
@@ -89,7 +94,7 @@ public class DashboardNavigator {
 
             Scene mainScene = new Scene(root, 1100, 750);
 
-            currentStage.setTitle("QDC LIMS");
+            brandingService.tagStage(currentStage, brandingService.getApplicationName());
             currentStage.setMaximized(false);
             currentStage.setScene(mainScene);
             currentStage.setWidth(1100);

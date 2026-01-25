@@ -1,6 +1,7 @@
 package com.qdc.lims;
 
 import com.qdc.lims.ui.AppPaths;
+import com.qdc.lims.service.BrandingService;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -48,7 +49,8 @@ public class DesktopApplication extends Application {
         Parent root = loader.load();
         Scene scene = new Scene(root, 1100, 750);
 
-        primaryStage.setTitle("QDC LIMS - Laboratory Information Management System");
+        BrandingService brandingService = springContext.getBean(BrandingService.class);
+        brandingService.tagStage(primaryStage, brandingService.getApplicationName());
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(900);
         primaryStage.setMinHeight(600);

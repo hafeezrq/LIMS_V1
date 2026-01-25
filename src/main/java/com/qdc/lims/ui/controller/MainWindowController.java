@@ -4,15 +4,19 @@ import com.qdc.lims.ui.SessionManager;
 import com.qdc.lims.ui.navigation.DashboardType;
 import com.qdc.lims.entity.User;
 import com.qdc.lims.service.AuthService;
+import com.qdc.lims.service.BrandingService;
+import com.qdc.lims.service.ConfigService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -45,6 +49,8 @@ public class MainWindowController {
 
     private final ApplicationContext applicationContext;
     private final AuthService authService;
+    private final BrandingService brandingService;
+    private final ConfigService configService;
 
     @FXML
     private BorderPane mainContainer;
@@ -72,6 +78,14 @@ public class MainWindowController {
 
     @FXML
     private Label sessionCountLabel;
+    @FXML
+    private Label appHeaderLabel;
+    @FXML
+    private Label welcomeTitleLabel;
+    @FXML
+    private Label welcomeSubtitleLabel;
+    @FXML
+    private Label footerBrandLabel;
 
     // Track which tab belongs to which session
     private final Map<Tab, SessionInfo> tabSessions = new HashMap<>();
@@ -80,6 +94,7 @@ public class MainWindowController {
     private long sessionTimeoutMinutes;
 
     private Timeline sessionExpiryTimer;
+    private boolean firstRunPromptShown;
 
     // Session info holder
     private static class SessionInfo {
@@ -98,9 +113,14 @@ public class MainWindowController {
         }
     }
 
-    public MainWindowController(ApplicationContext applicationContext, AuthService authService) {
+    public MainWindowController(ApplicationContext applicationContext,
+            AuthService authService,
+            BrandingService brandingService,
+            ConfigService configService) {
         this.applicationContext = applicationContext;
         this.authService = authService;
+        this.brandingService = brandingService;
+        this.configService = configService;
     }
 
     @FXML
@@ -157,7 +177,99 @@ public class MainWindowController {
         // Initially hide tabs and show welcome
         updateUI();
         updateButtonStates();
+        applyBrandingToLabels();
+        setupStageBrandingAndFirstRun();
         setupSessionTimeoutHandlers();
+    }
+
+    private void applyBrandingToLabels() {
+        String appName = brandingService.getApplicationName();
+        String labName = brandingService.getLabNameOrAppName();
+
+        if (appHeaderLabel != null) {
+            appHeaderLabel.setText("🧪 " + labName);
+        }
+        if (welcomeTitleLabel != null) {
+            welcomeTitleLabel.setText(labName);
+        }
+        if (welcomeSubtitleLabel != null) {
+            if (labName.equals(appName)) {
+                welcomeSubtitleLabel.setText("Laboratory Information Management System");
+            } else {
+                welcomeSubtitleLabel.setText(appName + " - Laboratory Information Management System");
+            }
+        }
+        if (footerBrandLabel != null) {
+            footerBrandLabel.setText(brandingService.getCopyrightLine());
+        }
+    }
+
+    private void setupStageBrandingAndFirstRun() {
+        if (mainContainer == null) {
+            return;
+        }
+        mainContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                return;
+            }
+            newScene.windowProperty().addListener((obs2, oldWindow, newWindow) -> {
+                if (newWindow instanceof Stage stage) {
+                    brandingService.tagStage(stage, brandingService.getApplicationName());
+                    if (!firstRunPromptShown) {
+                        firstRunPromptShown = true;
+                        Platform.runLater(() -> handleFirstRun(stage));
+                    }
+                }
+            });
+        });
+    }
+
+    private void handleFirstRun(Stage owner) {
+        configService.refreshCache();
+        if (brandingService.isLabProfileComplete()) {
+            return;
+        }
+
+        Alert intro = new Alert(Alert.AlertType.INFORMATION);
+        intro.setTitle("Welcome");
+        intro.setHeaderText("Complete Lab Setup");
+        intro.setContentText("Please enter your lab details. These will be used across the system and reports.");
+        intro.showAndWait();
+
+        openFirstRunSetupDialog(owner);
+
+        configService.refreshCache();
+        applyBrandingToLabels();
+        brandingService.refreshAllTaggedStageTitles();
+
+        if (!brandingService.isLabProfileComplete()) {
+            Alert reminder = new Alert(Alert.AlertType.WARNING);
+            reminder.setTitle("Setup Incomplete");
+            reminder.setHeaderText("Lab details are still incomplete");
+            reminder.setContentText("You can continue, but branding and reports may be missing lab information.");
+            reminder.showAndWait();
+        }
+    }
+
+    private void openFirstRunSetupDialog(Stage owner) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/system_settings.fxml"));
+            loader.setControllerFactory(applicationContext::getBean);
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.initOwner(owner);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            brandingService.tagStage(stage, "System Configuration");
+            stage.setScene(new Scene(root));
+            stage.setMinWidth(800);
+            stage.setMinHeight(600);
+            stage.centerOnScreen();
+            stage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Setup Error", "Unable to open System Configuration: " + e.getMessage());
+        }
     }
 
     /**

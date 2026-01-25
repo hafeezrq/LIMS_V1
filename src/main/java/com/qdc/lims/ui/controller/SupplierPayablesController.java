@@ -2,6 +2,7 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.SupplierLedger;
 import com.qdc.lims.repository.SupplierLedgerRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,6 +26,8 @@ public class SupplierPayablesController {
 
     @Autowired
     private SupplierLedgerRepository supplierLedgerRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private DatePicker startDatePicker;
@@ -60,6 +63,7 @@ public class SupplierPayablesController {
      */
     @FXML
     public void initialize() {
+        localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
         endDatePicker.setValue(LocalDate.now());
         setupTable();
@@ -147,7 +151,7 @@ public class SupplierPayablesController {
                     ? latest.getInvoiceNumber()
                     : "-";
             String latestDue = latest != null && latest.getDueDate() != null
-                    ? latest.getDueDate().toString()
+                    ? localeFormatService.formatDate(latest.getDueDate())
                     : "-";
 
             rows.add(new SupplierPayableSummary(entry.getKey(), bill, paid, due, latestInvoice, latestDue));
@@ -172,7 +176,7 @@ public class SupplierPayablesController {
     }
 
     private String formatAmount(double amount) {
-        return String.format("$%.2f", amount);
+        return localeFormatService.formatCurrency(amount);
     }
 
     /**

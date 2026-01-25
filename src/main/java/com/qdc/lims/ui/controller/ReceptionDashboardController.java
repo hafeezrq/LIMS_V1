@@ -1,5 +1,6 @@
 package com.qdc.lims.ui.controller;
 
+import com.qdc.lims.service.BrandingService;
 import com.qdc.lims.ui.SessionManager;
 import com.qdc.lims.ui.navigation.DashboardSwitchService;
 import com.qdc.lims.ui.navigation.DashboardType;
@@ -9,6 +10,7 @@ import com.qdc.lims.entity.LabResult;
 import com.qdc.lims.entity.Patient;
 import com.qdc.lims.entity.User; // <--- ADDED THIS IMPORT TO FIX THE ERROR
 import com.qdc.lims.repository.LabOrderRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -38,10 +40,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,7 +58,8 @@ public class ReceptionDashboardController {
     private final ApplicationContext applicationContext;
     private final LabOrderRepository labOrderRepository;
     private final DashboardSwitchService dashboardSwitchService;
-    private final DecimalFormat df = new DecimalFormat("#,##0.00");
+    private final BrandingService brandingService;
+    private final LocaleFormatService localeFormatService;
 
     // Auto-refresh timer for real-time count updates
     private Timeline autoRefreshTimeline;
@@ -74,6 +75,8 @@ public class ReceptionDashboardController {
     private Label dateTimeLabel;
     @FXML
     private Label statusLabel;
+    @FXML
+    private Label footerBrandLabel;
     @FXML
     private ComboBox<String> dashboardSwitcher;
     @FXML
@@ -150,10 +153,14 @@ public class ReceptionDashboardController {
 
     public ReceptionDashboardController(ApplicationContext applicationContext,
             LabOrderRepository labOrderRepository,
-            DashboardSwitchService dashboardSwitchService) {
+            DashboardSwitchService dashboardSwitchService,
+            BrandingService brandingService,
+            LocaleFormatService localeFormatService) {
         this.applicationContext = applicationContext;
         this.labOrderRepository = labOrderRepository;
         this.dashboardSwitchService = dashboardSwitchService;
+        this.brandingService = brandingService;
+        this.localeFormatService = localeFormatService;
     }
 
     @FXML
@@ -162,6 +169,7 @@ public class ReceptionDashboardController {
         setupReadyOrdersTable();
         setupPendingOrdersTable();
         setupDeliveredOrdersTable();
+        localeFormatService.applyDatePickerLocale(deliveredFromDatePicker, deliveredToDatePicker);
         initializeDeliveredDateRange();
         loadOrders();
         startAutoRefresh();
@@ -180,6 +188,7 @@ public class ReceptionDashboardController {
                             // Applicable" error)
                             DashboardType current = dashboardSwitchService.getDefaultDashboard(stage);
                             dashboardSwitchService.setupDashboardSwitcher(dashboardSwitcher, current, stage);
+                            brandingService.tagStage(stage, DashboardType.RECEPTION.getWindowTitle());
 
                             // 3. Update Welcome Labels for THIS specific user
                             // This ensures we don't accidentally show "Welcome Admin" on the Reception
@@ -191,11 +200,14 @@ public class ReceptionDashboardController {
                                 if (welcomeLabel != null)
                                     welcomeLabel.setText("Welcome, " + username);
                             }
+                            applyBranding();
                         }
                     });
                 }
             });
         }
+
+        applyBranding();
     }
 
     /**
@@ -244,11 +256,10 @@ public class ReceptionDashboardController {
     }
 
     private void startClock() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, MMM dd yyyy - HH:mm");
         Thread clockThread = new Thread(() -> {
             while (true) {
                 try {
-                    String time = LocalDateTime.now().format(formatter);
+                    String time = localeFormatService.formatDateTime(LocalDateTime.now());
                     Platform.runLater(() -> {
                         if (dateTimeLabel != null) {
                             dateTimeLabel.setText(time);
@@ -262,7 +273,7 @@ public class ReceptionDashboardController {
         });
         clockThread.setDaemon(true);
         clockThread.start();
-        dateTimeLabel.setText(LocalDateTime.now().format(formatter));
+        dateTimeLabel.setText(localeFormatService.formatDateTime(LocalDateTime.now()));
     }
 
     private void setupReadyOrdersTable() {
@@ -278,13 +289,13 @@ public class ReceptionDashboardController {
         readyDateCol.setCellValueFactory(data -> {
             LocalDateTime dt = data.getValue().getOrderDate();
             return new SimpleStringProperty(
-                    dt != null ? dt.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) : "-");
+                    dt != null ? localeFormatService.formatDateTime(dt) : "-");
         });
         readyBalanceCol.setCellValueFactory(data -> {
             Double balance = data.getValue().getBalanceDue();
             if (balance == null || balance <= 0)
                 return new SimpleStringProperty("PAID");
-            return new SimpleStringProperty("Rs. " + df.format(balance));
+            return new SimpleStringProperty(localeFormatService.formatCurrency(balance));
         });
 
         readyBalanceCol.setCellFactory(col -> new TableCell<LabOrder, String>() {
@@ -340,7 +351,7 @@ public class ReceptionDashboardController {
         pendingDateCol.setCellValueFactory(data -> {
             LocalDateTime dt = data.getValue().getOrderDate();
             return new SimpleStringProperty(
-                    dt != null ? dt.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) : "-");
+                    dt != null ? localeFormatService.formatDateTime(dt) : "-");
         });
         pendingStatusCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
         pendingOrdersTable.setItems(pendingOrders);
@@ -360,12 +371,12 @@ public class ReceptionDashboardController {
         deliveredOrderDateCol.setCellValueFactory(data -> {
             LocalDateTime dt = data.getValue().getOrderDate();
             return new SimpleStringProperty(
-                    dt != null ? dt.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) : "-");
+                    dt != null ? localeFormatService.formatDateTime(dt) : "-");
         });
         deliveredDeliveryDateCol.setCellValueFactory(data -> {
             LocalDateTime dt = data.getValue().getDeliveryDate();
             return new SimpleStringProperty(
-                    dt != null ? dt.format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) : "-");
+                    dt != null ? localeFormatService.formatDateTime(dt) : "-");
         });
 
         deliveredActionCol.setCellFactory(col -> new TableCell<LabOrder, Void>() {
@@ -426,7 +437,7 @@ public class ReceptionDashboardController {
             readyCountLabel.setText(String.valueOf(ready.size()));
             pendingCountLabel.setText(String.valueOf(pending.size()));
             statusLabel
-                    .setText("Last refreshed: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                    .setText("Last refreshed: " + localeFormatService.formatTime(LocalDateTime.now().toLocalTime()));
 
         } catch (Exception e) {
             showError("Failed to load orders: " + e.getMessage());
@@ -630,7 +641,7 @@ public class ReceptionDashboardController {
     private boolean showPaymentDialog(LabOrder order) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Payment Required");
-        dialog.setHeaderText("Outstanding Balance: Rs. " + df.format(order.getBalanceDue()));
+        dialog.setHeaderText("Outstanding Balance: " + localeFormatService.formatCurrency(order.getBalanceDue()));
 
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
@@ -638,14 +649,15 @@ public class ReceptionDashboardController {
         content.getChildren().add(new Label("Order #: " + order.getId()));
         content.getChildren().add(new Separator());
 
-        Label amountLabel = new Label("Amount to Collect: Rs. " + df.format(order.getBalanceDue()));
+        Label amountLabel = new Label(
+                "Amount to Collect: " + localeFormatService.formatCurrency(order.getBalanceDue()));
         amountLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #e74c3c;");
         content.getChildren().add(amountLabel);
 
-        TextField paymentField = new TextField(df.format(order.getBalanceDue()));
+        TextField paymentField = new TextField(localeFormatService.formatNumber(order.getBalanceDue()));
         HBox paymentRow = new HBox(10);
         paymentRow.setAlignment(Pos.CENTER_LEFT);
-        paymentRow.getChildren().addAll(new Label("Payment Received: Rs."), paymentField);
+        paymentRow.getChildren().addAll(new Label("Payment Received:"), paymentField);
         content.getChildren().add(paymentRow);
 
         dialog.getDialogPane().setContent(content);
@@ -654,14 +666,15 @@ public class ReceptionDashboardController {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                double payment = Double.parseDouble(paymentField.getText().replace(",", ""));
+                double payment = localeFormatService.parseNumber(paymentField.getText());
                 if (payment > 0) {
                     Double currentPaid = order.getPaidAmount() != null ? order.getPaidAmount() : 0;
                     order.setPaidAmount(currentPaid + payment);
                     order.calculateBalance();
                     try {
                         labOrderRepository.save(order);
-                        showAlert("Payment Recorded", "Payment of Rs. " + df.format(payment) + " has been recorded.");
+                        showAlert("Payment Recorded",
+                                "Payment of " + localeFormatService.formatCurrency(payment) + " has been recorded.");
                         return true;
                     } catch (ObjectOptimisticLockingFailureException e) {
                         showError("This order was updated by another user. Please refresh and try again.");
@@ -707,7 +720,7 @@ public class ReceptionDashboardController {
         content.getChildren().add(new Separator());
 
         String paymentStatus = (order.getBalanceDue() == null || order.getBalanceDue() <= 0) ? "FULLY PAID"
-                : "Balance Due: Rs. " + df.format(order.getBalanceDue());
+                : "Balance Due: " + localeFormatService.formatCurrency(order.getBalanceDue());
         Label paymentLabel = new Label("Payment Status: " + paymentStatus);
         paymentLabel.setStyle((order.getBalanceDue() == null || order.getBalanceDue() <= 0)
                 ? "-fx-text-fill: #27ae60; -fx-font-weight: bold;"
@@ -802,8 +815,7 @@ public class ReceptionDashboardController {
                 "\nPatient: " + patient.getFullName() + "\n" +
                         "MRN: " + patient.getMrn() + "\n" +
                         "Age/Gender: " + patient.getAge() + " / " + patient.getGender() + "\n" +
-                        "Order Date: " + order.getOrderDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm"))
-                        + "\n");
+                        "Order Date: " + localeFormatService.formatDateTime(order.getOrderDate()) + "\n");
 
         String separator = "-".repeat(52);
         StringBuilder results = new StringBuilder("\nTEST RESULTS\n" + separator + "\n");
@@ -820,7 +832,7 @@ public class ReceptionDashboardController {
         Text resultsText = new Text(results.toString());
         Text footer = new Text(
                 "Report Generated: "
-                        + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) + "\n" +
+                        + localeFormatService.formatDateTime(LocalDateTime.now()) + "\n" +
                         "This is a computer-generated report.");
         footer.setStyle("-fx-font-size: 10; -fx-fill: #555555;");
 
@@ -884,7 +896,7 @@ public class ReceptionDashboardController {
         header.setStyle("-fx-font-size: 16; -fx-font-weight: bold;");
 
         Text orderInfo = new Text("Order #: " + order.getId() + "\n" +
-                "Date: " + order.getOrderDate().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm")) + "\n\n" +
+                "Date: " + localeFormatService.formatDateTime(order.getOrderDate()) + "\n\n" +
                 "Patient: " + patient.getFullName() + "\n" +
                 "MRN: " + patient.getMrn() + "\n\n");
 
@@ -892,8 +904,12 @@ public class ReceptionDashboardController {
         if (order.getResults() != null) {
             for (LabResult result : order.getResults()) {
                 if (result.getTestDefinition() != null) {
-                    tests.append(result.getTestDefinition().getTestName()).append(" - Rs. ")
-                            .append(df.format(result.getTestDefinition().getPrice())).append("\n");
+                    tests.append(result.getTestDefinition().getTestName()).append(" - ")
+                            .append(localeFormatService.formatCurrency(
+                                    result.getTestDefinition().getPrice() != null
+                                            ? result.getTestDefinition().getPrice().doubleValue()
+                                            : 0.0))
+                            .append("\n");
                 }
             }
         }
@@ -905,12 +921,12 @@ public class ReceptionDashboardController {
         Double paid = order.getPaidAmount() != null ? order.getPaidAmount() : 0;
         Double balance = order.getBalanceDue() != null ? order.getBalanceDue() : 0;
 
-        Text billing = new Text("Total Amount: Rs. " + df.format(total) + "\n" +
-                "Discount: Rs. " + df.format(discount) + "\n" +
-                "Paid: Rs. " + df.format(paid) + "\n" +
-                "Balance Due: Rs. " + df.format(balance) + "\n\n");
+        Text billing = new Text("Total Amount: " + localeFormatService.formatCurrency(total) + "\n" +
+                "Discount: " + localeFormatService.formatCurrency(discount) + "\n" +
+                "Paid: " + localeFormatService.formatCurrency(paid) + "\n" +
+                "Balance Due: " + localeFormatService.formatCurrency(balance) + "\n\n");
         billing.setStyle("-fx-font-weight: bold;");
-        Text footer = new Text("Thank you for choosing QDC Laboratory");
+        Text footer = new Text("Thank you for choosing " + brandingService.getLabNameOrAppName());
         footer.setStyle("-fx-font-size: 10;");
 
         flow.getChildren().addAll(header, orderInfo, testsText, billing, footer);
@@ -919,7 +935,7 @@ public class ReceptionDashboardController {
 
     private void openReceiptReprintDialog() {
         Stage stage = new Stage();
-        stage.setTitle("Reprint Receipt");
+        brandingService.tagStage(stage, "Reprint Receipt");
         stage.initOwner(mainContainer.getScene().getWindow());
         stage.initModality(Modality.WINDOW_MODAL);
 
@@ -931,6 +947,7 @@ public class ReceptionDashboardController {
 
         DatePicker fromDate = new DatePicker(LocalDate.now().minusDays(7));
         DatePicker toDate = new DatePicker(LocalDate.now());
+        localeFormatService.applyDatePickerLocale(fromDate, toDate);
 
         Button todayBtn = new Button("Today");
         todayBtn.getStyleClass().add("btn-secondary");
@@ -954,10 +971,9 @@ public class ReceptionDashboardController {
                 data.getValue() != null ? String.valueOf(data.getValue().getId()) : ""));
 
         TableColumn<LabOrder, String> dateCol = new TableColumn<>("Date");
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm");
         dateCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue() != null && data.getValue().getOrderDate() != null
-                        ? data.getValue().getOrderDate().format(dtf)
+                        ? localeFormatService.formatDateTime(data.getValue().getOrderDate())
                         : ""));
 
         TableColumn<LabOrder, String> patientCol = new TableColumn<>("Patient");
@@ -975,20 +991,20 @@ public class ReceptionDashboardController {
         TableColumn<LabOrder, String> totalCol = new TableColumn<>("Total");
         totalCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue() != null && data.getValue().getTotalAmount() != null
-                        ? "Rs. " + df.format(data.getValue().getTotalAmount())
-                        : "Rs. 0"));
+                        ? localeFormatService.formatCurrency(data.getValue().getTotalAmount())
+                        : localeFormatService.formatCurrency(0.0)));
 
         TableColumn<LabOrder, String> paidCol = new TableColumn<>("Paid");
         paidCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue() != null && data.getValue().getPaidAmount() != null
-                        ? "Rs. " + df.format(data.getValue().getPaidAmount())
-                        : "Rs. 0"));
+                        ? localeFormatService.formatCurrency(data.getValue().getPaidAmount())
+                        : localeFormatService.formatCurrency(0.0)));
 
         TableColumn<LabOrder, String> balanceCol = new TableColumn<>("Balance");
         balanceCol.setCellValueFactory(data -> new SimpleStringProperty(
                 data.getValue() != null && data.getValue().getBalanceDue() != null
-                        ? "Rs. " + df.format(data.getValue().getBalanceDue())
-                        : "Rs. 0"));
+                        ? localeFormatService.formatCurrency(data.getValue().getBalanceDue())
+                        : localeFormatService.formatCurrency(0.0)));
 
         table.getColumns().addAll(idCol, dateCol, patientCol, mrnCol, totalCol, paidCol, balanceCol);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -1123,6 +1139,12 @@ public class ReceptionDashboardController {
 
     // ========== Utility Methods ==========
 
+    private void applyBranding() {
+        if (footerBrandLabel != null) {
+            footerBrandLabel.setText(brandingService.getLabNameOrAppName() + " - Reception");
+        }
+    }
+
     private void openWindow(String fxmlPath, String title, int width, int height) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -1130,7 +1152,7 @@ public class ReceptionDashboardController {
             Parent root = loader.load();
 
             Stage stage = new Stage();
-            stage.setTitle(title);
+            brandingService.tagStage(stage, title);
             stage.setScene(new Scene(root, width, height));
             stage.initModality(Modality.NONE);
             stage.setOnHidden(e -> loadOrders());

@@ -3,6 +3,7 @@ package com.qdc.lims.ui.controller;
 import com.qdc.lims.entity.CommissionLedger;
 import com.qdc.lims.entity.Doctor;
 import com.qdc.lims.repository.CommissionLedgerRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Component;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +33,8 @@ public class CommissionManagementController {
 
     @Autowired
     private CommissionLedgerRepository commissionRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     // Statistics Labels
     @FXML
@@ -101,15 +103,14 @@ public class CommissionManagementController {
     private ObservableList<CommissionLedger> filteredCommissions = FXCollections.observableArrayList();
     private Map<Long, Boolean> selectionMap = new HashMap<>();
 
-    private DecimalFormat currencyFormat = new DecimalFormat("$#,##0.00");
     private DecimalFormat percentFormat = new DecimalFormat("#0.0#");
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
      * Initialize the controller and set up the UI components.
      */
     @FXML
     public void initialize() {
+        localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
         setupTable();
         setupListeners();
         loadData();
@@ -162,7 +163,7 @@ public class CommissionManagementController {
         // Date Column
         dateColumn.setCellValueFactory(cellData -> {
             LocalDate date = cellData.getValue().getTransactionDate();
-            String dateStr = date != null ? date.format(dateFormatter) : "";
+            String dateStr = date != null ? localeFormatService.formatDate(date) : "";
             return new SimpleStringProperty(dateStr);
         });
 
@@ -177,7 +178,7 @@ public class CommissionManagementController {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(currencyFormat.format(item));
+                    setText(localeFormatService.formatCurrency(item));
                 }
             }
         });
@@ -209,7 +210,7 @@ public class CommissionManagementController {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(currencyFormat.format(item));
+                    setText(localeFormatService.formatCurrency(item));
                     // Highlight larger commissions
                     if (item > 100.0) {
                         setStyle("-fx-font-weight: bold; -fx-text-fill: #27ae60;");
@@ -379,14 +380,14 @@ public class CommissionManagementController {
                     .filter(c -> "UNPAID".equals(c.getStatus()))
                     .mapToDouble(this::getCommissionAmount)
                     .sum();
-            totalUnpaidLabel.setText(currencyFormat.format(totalUnpaid));
+            totalUnpaidLabel.setText(localeFormatService.formatCurrency(totalUnpaid));
 
             // Total paid
             double totalPaid = allCommissions.stream()
                     .filter(c -> "PAID".equals(c.getStatus()))
                     .mapToDouble(this::getCommissionAmount)
                     .sum();
-            totalPaidLabel.setText(currencyFormat.format(totalPaid));
+            totalPaidLabel.setText(localeFormatService.formatCurrency(totalPaid));
 
             // Pending count
             long pendingCount = commissionRepository.countByStatus("UNPAID");
@@ -401,7 +402,7 @@ public class CommissionManagementController {
                     .stream()
                     .mapToDouble(this::getCommissionAmount)
                     .sum();
-            thisMonthLabel.setText(currencyFormat.format(thisMonth));
+            thisMonthLabel.setText(localeFormatService.formatCurrency(thisMonth));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -455,7 +456,7 @@ public class CommissionManagementController {
         confirmation.setHeaderText("Mark commission as paid?");
         confirmation.setContentText(
                 "Doctor: " + commission.getDoctor().getName() + "\n" +
-                        "Amount: " + currencyFormat.format(getCommissionAmount(commission)) + "\n\n" +
+                        "Amount: " + localeFormatService.formatCurrency(getCommissionAmount(commission)) + "\n\n" +
                         "Mark this commission as paid?");
 
         Optional<ButtonType> result = confirmation.showAndWait();
@@ -493,7 +494,7 @@ public class CommissionManagementController {
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Confirm Payment");
         confirmation.setHeaderText("Mark " + selected.size() + " commission(s) as paid?");
-        confirmation.setContentText("Total Amount: " + currencyFormat.format(totalAmount));
+        confirmation.setContentText("Total Amount: " + localeFormatService.formatCurrency(totalAmount));
 
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -593,18 +594,19 @@ public class CommissionManagementController {
 
         grid.add(new Label("Date:"), 0, row);
         grid.add(new Label(
-                commission.getTransactionDate() != null ? commission.getTransactionDate().format(dateFormatter)
+                commission.getTransactionDate() != null
+                        ? localeFormatService.formatDate(commission.getTransactionDate())
                         : "N/A"),
                 1, row++);
 
         grid.add(new Label("Bill Amount:"), 0, row);
-        grid.add(new Label(currencyFormat.format(getBillAmount(commission))), 1, row++);
+        grid.add(new Label(localeFormatService.formatCurrency(getBillAmount(commission))), 1, row++);
 
         grid.add(new Label("Commission Rate:"), 0, row);
         grid.add(new Label(percentFormat.format(getCommissionRate(commission)) + "%"), 1, row++);
 
         grid.add(new Label("Commission Amount:"), 0, row);
-        Label amountLabel = new Label(currencyFormat.format(getCommissionAmount(commission)));
+        Label amountLabel = new Label(localeFormatService.formatCurrency(getCommissionAmount(commission)));
         amountLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #27ae60;");
         grid.add(amountLabel, 1, row++);
 
@@ -666,7 +668,8 @@ public class CommissionManagementController {
 
             grid.add(checkBox, 0, row);
             grid.add(new Label(doctor.getName()), 1, row);
-            grid.add(new Label(currencyFormat.format(total) + " (" + commissions.size() + " records)"), 2, row);
+            grid.add(new Label(localeFormatService.formatCurrency(total) + " (" + commissions.size() + " records)"), 2,
+                    row);
             row++;
         }
 

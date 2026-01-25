@@ -9,6 +9,7 @@ import com.qdc.lims.repository.CommissionLedgerRepository;
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.repository.PaymentRepository;
 import com.qdc.lims.repository.SupplierLedgerRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -45,6 +45,8 @@ public class PaymentHistoryController {
     private CommissionLedgerRepository commissionRepository;
     @Autowired
     private SupplierLedgerRepository supplierRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private Button closeButton;
@@ -89,6 +91,7 @@ public class PaymentHistoryController {
         setupFilters();
 
         // Default to current month
+        localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
         endDatePicker.setValue(LocalDate.now());
 
@@ -101,10 +104,8 @@ public class PaymentHistoryController {
     }
 
     private void setupTable() {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
         dateCol.setCellValueFactory(data -> new SimpleStringProperty(
-                data.getValue().getDate() != null ? data.getValue().getDate().format(dtf) : ""));
+                data.getValue().getDate() != null ? localeFormatService.formatDate(data.getValue().getDate()) : ""));
         idCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getSourceId()));
         typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getType()));
         categoryCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
@@ -112,7 +113,7 @@ public class PaymentHistoryController {
         statusCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStatus()));
 
         amountCol.setCellValueFactory(data -> new SimpleStringProperty(
-                String.format("$%.2f", data.getValue().getAmount())));
+                localeFormatService.formatCurrency(data.getValue().getAmount())));
 
         // Color coding for amount
         amountCol.setCellFactory(column -> new TableCell<FinanceTransaction, String>() {
@@ -252,9 +253,9 @@ public class PaymentHistoryController {
         double totalExpense = filtered.stream().filter(t -> "EXPENSE".equals(t.getType()))
                 .mapToDouble(FinanceTransaction::getAmount).sum();
 
-        totalIncomeLabel.setText(String.format("$%.2f", totalIncome));
-        totalExpenseLabel.setText(String.format("$%.2f", totalExpense));
-        netCashFlowLabel.setText(String.format("$%.2f", totalIncome - totalExpense));
+        totalIncomeLabel.setText(localeFormatService.formatCurrency(totalIncome));
+        totalExpenseLabel.setText(localeFormatService.formatCurrency(totalExpense));
+        netCashFlowLabel.setText(localeFormatService.formatCurrency(totalIncome - totalExpense));
         recordCountLabel.setText(filtered.size() + " records found");
     }
 

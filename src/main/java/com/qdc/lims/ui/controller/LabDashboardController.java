@@ -1,8 +1,10 @@
 package com.qdc.lims.ui.controller;
 
+import com.qdc.lims.service.BrandingService;
 import com.qdc.lims.ui.DashboardNavigator;
 import com.qdc.lims.ui.SessionManager;
 import com.qdc.lims.ui.navigation.DashboardSwitchService;
+import com.qdc.lims.ui.navigation.DashboardType;
 import com.qdc.lims.ui.util.LogoutUtil;
 import com.qdc.lims.repository.LabOrderRepository;
 import javafx.animation.Animation;
@@ -39,6 +41,8 @@ public class LabDashboardController {
 
     @FXML
     private Label completedCountLabel;
+    @FXML
+    private Label footerBrandLabel;
 
     @FXML
     private Button switchRoleButton;
@@ -50,15 +54,18 @@ public class LabDashboardController {
     private final DashboardNavigator navigator;
     private final LabOrderRepository labOrderRepository;
     private final DashboardSwitchService dashboardSwitchService;
+    private final BrandingService brandingService;
 
     public LabDashboardController(ApplicationContext springContext,
             DashboardNavigator navigator,
             LabOrderRepository labOrderRepository,
-            DashboardSwitchService dashboardSwitchService) {
+            DashboardSwitchService dashboardSwitchService,
+            BrandingService brandingService) {
         this.springContext = springContext;
         this.navigator = navigator;
         this.labOrderRepository = labOrderRepository;
         this.dashboardSwitchService = dashboardSwitchService;
+        this.brandingService = brandingService;
     }
 
     @FXML
@@ -82,9 +89,11 @@ public class LabDashboardController {
                     newScene.windowProperty().addListener((obs2, oldWindow, newWindow) -> {
                         if (newWindow instanceof Stage stage) {
                             stage.setOnShown(e -> {
+                                brandingService.tagStage(stage, DashboardType.LAB.getWindowTitle());
                                 updateUserLabels();
                                 loadDashboardStats();
                                 startAutoRefresh();
+                                applyBranding();
                             });
                             stage.setOnHidden(e -> stopAutoRefresh());
                         }
@@ -92,6 +101,8 @@ public class LabDashboardController {
                 }
             });
         }
+
+        applyBranding();
     }
 
     /**
@@ -196,8 +207,7 @@ public class LabDashboardController {
             loader.setControllerFactory(springContext::getBean);
             Parent root = loader.load();
 
-            Stage stage = new Stage();
-            stage.setTitle("Patient Registration");
+            Stage stage = createBrandedStage("Patient Registration");
             stage.setScene(new Scene(root, 550, 620));
             stage.show();
         } catch (Exception e) {
@@ -218,8 +228,7 @@ public class LabDashboardController {
             loader.setControllerFactory(springContext::getBean);
             Parent root = loader.load();
 
-            Stage stage = new Stage();
-            stage.setTitle("Create Lab Order");
+            Stage stage = createBrandedStage("Create Lab Order");
             stage.setScene(new Scene(root, 900, 800));
             stage.show();
         } catch (Exception e) {
@@ -243,8 +252,7 @@ public class LabDashboardController {
             LabWorklistController controller = loader.getController();
             controller.showPending();
 
-            Stage stage = new Stage();
-            stage.setTitle("Lab Worklist");
+            Stage stage = createBrandedStage("Lab Worklist");
             stage.setScene(new Scene(root));
             stage.show();
         } catch (Exception e) {
@@ -263,8 +271,7 @@ public class LabDashboardController {
             LabWorklistController controller = loader.getController();
             controller.showPending();
 
-            Stage stage = new Stage();
-            stage.setTitle("Lab Worklist - Enter Results");
+            Stage stage = createBrandedStage("Lab Worklist - Enter Results");
             stage.setScene(new Scene(root));
             stage.show();
         } catch (Exception e) {
@@ -284,8 +291,7 @@ public class LabDashboardController {
             LabWorklistController controller = loader.getController();
             controller.showCompleted();
 
-            Stage stage = new Stage();
-            stage.setTitle("Lab Worklist - Completed Tests");
+            Stage stage = createBrandedStage("Lab Worklist - Completed Tests");
             stage.setScene(new Scene(root));
             stage.show();
         } catch (Exception e) {
@@ -301,8 +307,7 @@ public class LabDashboardController {
             loader.setControllerFactory(springContext::getBean);
             Parent root = loader.load();
 
-            Stage stage = new Stage();
-            stage.setTitle("Inventory Management");
+            Stage stage = createBrandedStage("Inventory Management");
             stage.setScene(new Scene(root));
             stage.show();
         } catch (Exception e) {
@@ -314,6 +319,18 @@ public class LabDashboardController {
     @FXML
     private void handleLowStock() {
         showAlert("Feature", "Low Stock Alert feature will be implemented in the full version.");
+    }
+
+    private void applyBranding() {
+        if (footerBrandLabel != null) {
+            footerBrandLabel.setText(brandingService.getLabNameOrAppName() + " - Lab Interface");
+        }
+    }
+
+    private Stage createBrandedStage(String context) {
+        Stage stage = new Stage();
+        brandingService.tagStage(stage, context);
+        return stage;
     }
 
     private void showAlert(String title, String message) {

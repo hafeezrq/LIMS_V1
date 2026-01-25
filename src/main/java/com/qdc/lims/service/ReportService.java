@@ -9,6 +9,11 @@ import org.springframework.stereotype.Service;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Generates printable PDF lab reports for completed orders.
@@ -17,14 +22,21 @@ import java.math.BigDecimal;
 public class ReportService {
 
     private final LabOrderRepository orderRepo;
+    private final BrandingService brandingService;
+    private final LocaleFormatService localeFormatService;
 
     /**
      * Creates the report service.
      *
-     * @param orderRepo lab order repository
+     * @param orderRepo       lab order repository
+     * @param brandingService branding and lab profile service
      */
-    public ReportService(LabOrderRepository orderRepo) {
+    public ReportService(LabOrderRepository orderRepo,
+            BrandingService brandingService,
+            LocaleFormatService localeFormatService) {
         this.orderRepo = orderRepo;
+        this.brandingService = brandingService;
+        this.localeFormatService = localeFormatService;
     }
 
     /**
@@ -46,67 +58,48 @@ public class ReportService {
 
             // 1. Header
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, Color.BLUE);
-            Paragraph title = new Paragraph("QDC-LIMS PATHOLOGY LAB", titleFont);
+            Paragraph title = new Paragraph(brandingService.getReportHeaderText(), titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             document.add(title);
+            addLabContactDetails(document);
             document.add(new Paragraph("\n"));
 
             // 2. Patient Details
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
             document.add(new Paragraph("Patient Name: " + patient.getFullName(), normalFont));
             document.add(new Paragraph("MRN: " + patient.getMrn(), normalFont));
-            document.add(new Paragraph("Date: " + order.getOrderDate().toLocalDate(), normalFont));
+            document.add(new Paragraph("Date: " + localeFormatService.formatDate(order.getOrderDate().toLocalDate()),
+                    normalFont));
             document.add(new Paragraph("\n"));
 
-            // 3. Results Table
-            PdfPTable table = new PdfPTable(4);
-            table.setWidthPercentage(100);
-            table.setWidths(new float[]{3, 2, 2, 2});
+            // 3. Results grouped by department/category
+            Map<String, List<LabResult>> resultsByDepartment = order.getResults().stream()
+                    .filter(result -> result.getResultValue() != null && !result.getResultValue().trim().isEmpty())
+                    .collect(Collectors.groupingBy(
+                            result -> result.getTestDefinition() != null
+                                    && result.getTestDefinition().getDepartment() != null
+                                            ? result.getTestDefinition().getDepartment().getName()
+                                            : "Other",
+                            LinkedHashMap::new,
+                            Collectors.toList()));
 
-            addCell(table, "Test Name", true);
-            addCell(table, "Result", true);
-            addCell(table, "Unit", true);
-            addCell(table, "Ref. Range", true);
+            List<String> sortedDepartments = resultsByDepartment.keySet().stream()
+                    .sorted(Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                    .toList();
 
-            // Table Data
-            for (LabResult result : order.getResults()) {
-                // Skip results that are not yet entered.
-                if (result.getResultValue() == null || result.getResultValue().trim().isEmpty()) {
+            for (String department : sortedDepartments) {
+                List<LabResult> results = resultsByDepartment.get(department);
+                if (results == null || results.isEmpty()) {
                     continue;
                 }
-
-                addCell(table, result.getTestDefinition().getTestName(), false);
-
-                Font resultFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
-                if (result.isAbnormal()) {
-                    resultFont.setColor(Color.RED);
-                    resultFont.setStyle(Font.BOLD);
-                }
-
-                PdfPCell valueCell = new PdfPCell(new Phrase(result.getResultValue(), resultFont));
-                valueCell.setPadding(5);
-                table.addCell(valueCell);
-
-                String unit = result.getTestDefinition().getUnit();
-                addCell(table, unit != null ? unit : "", false);
-
-                BigDecimal min = result.getTestDefinition().getMinRange();
-                BigDecimal max = result.getTestDefinition().getMaxRange();
-
-                String range;
-                if (min != null && max != null) {
-                    range = min + " - " + max;
-                } else {
-                    range = "";
-                }
-                addCell(table, range, false);
+                addSectionHeader(document, department);
+                addResultsTable(document, results);
+                document.add(new Paragraph(" "));
             }
-
-            document.add(table);
 
             // 4. Footer
             document.add(new Paragraph("\n\n"));
-            Paragraph footer = new Paragraph("*** End of Report ***",
+            Paragraph footer = new Paragraph(brandingService.getReportFooterText(),
                     FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10));
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
@@ -138,5 +131,86 @@ public class ReportService {
             cell.setBackgroundColor(Color.DARK_GRAY);
         }
         table.addCell(cell);
+    }
+
+    private void addSectionHeader(Document document, String title) throws DocumentException {
+        Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.DARK_GRAY);
+        Chunk chunk = new Chunk(title, sectionFont);
+        chunk.setUnderline(0.8f, -2f);
+        Paragraph section = new Paragraph(chunk);
+        section.setSpacingBefore(8);
+        section.setSpacingAfter(4);
+        document.add(section);
+    }
+
+    private void addResultsTable(Document document, List<LabResult> results) throws DocumentException {
+        PdfPTable table = new PdfPTable(4);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{4, 2, 2, 3});
+
+        addCell(table, "Test Name", true);
+        addCell(table, "Result", true);
+        addCell(table, "Unit", true);
+        addCell(table, "Reference Range", true);
+
+        for (LabResult result : results) {
+            addCell(table, result.getTestDefinition().getTestName(), false);
+
+            Font resultFont = FontFactory.getFont(FontFactory.HELVETICA, 11);
+            if (result.isAbnormal()) {
+                resultFont.setColor(Color.RED);
+                resultFont.setStyle(Font.BOLD);
+            }
+            PdfPCell valueCell = new PdfPCell(new Phrase(result.getResultValue(), resultFont));
+            valueCell.setPadding(5);
+            table.addCell(valueCell);
+
+            String unit = result.getTestDefinition().getUnit();
+            addCell(table, unit != null ? unit : "", false);
+
+            String range = formatRange(result.getTestDefinition());
+            addCell(table, range, false);
+        }
+
+        document.add(table);
+    }
+
+    private String formatRange(TestDefinition testDefinition) {
+        BigDecimal min = testDefinition.getMinRange();
+        BigDecimal max = testDefinition.getMaxRange();
+        if (min != null && max != null) {
+            return min + " - " + max;
+        }
+        return "";
+    }
+
+    private void addLabContactDetails(Document document) throws DocumentException {
+        Font contactFont = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.DARK_GRAY);
+
+        String address = brandingService.getClinicAddress();
+        if (!address.isBlank()) {
+            Paragraph addressPara = new Paragraph(address, contactFont);
+            addressPara.setAlignment(Element.ALIGN_CENTER);
+            document.add(addressPara);
+        }
+
+        String phone = brandingService.getClinicPhone();
+        String email = brandingService.getClinicEmail();
+        StringBuilder contactLine = new StringBuilder();
+        if (!phone.isBlank()) {
+            contactLine.append(phone);
+        }
+        if (!email.isBlank()) {
+            if (!contactLine.isEmpty()) {
+                contactLine.append(" | ");
+            }
+            contactLine.append(email);
+        }
+
+        if (!contactLine.isEmpty()) {
+            Paragraph contactPara = new Paragraph(contactLine.toString(), contactFont);
+            contactPara.setAlignment(Element.ALIGN_CENTER);
+            document.add(contactPara);
+        }
     }
 }

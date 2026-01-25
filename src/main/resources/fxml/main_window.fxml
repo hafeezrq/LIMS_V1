@@ -16,7 +16,7 @@
             <!-- Application Header -->
             <HBox style="-fx-background-color: linear-gradient(to right, #2c3e50, #3498db); -fx-padding: 8 15;" 
                   spacing="15" alignment="CENTER_LEFT">
-                <Label text="🧪 QDC LIMS" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: default;">
+                <Label fx:id="appHeaderLabel" text="🧪 QDC LIMS" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: default;">
                     <font><Font size="18"/></font>
                 </Label>
                 <Region HBox.hgrow="ALWAYS" style="-fx-cursor: default;"/>
@@ -59,10 +59,10 @@
             
             <!-- Title -->
             <VBox alignment="CENTER" spacing="8" style="-fx-cursor: default;">
-                <Label text="QDC LIMS" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-cursor: default;">
+                <Label fx:id="welcomeTitleLabel" text="QDC LIMS" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-cursor: default;">
                     <font><Font size="42"/></font>
                 </Label>
-                <Label text="Laboratory Information Management System" 
+                <Label fx:id="welcomeSubtitleLabel" text="Laboratory Information Management System" 
                        style="-fx-text-fill: #7f8c8d; -fx-font-style: italic; -fx-cursor: default;">
                     <font><Font size="14"/></font>
                 </Label>
@@ -133,7 +133,7 @@
             <Label fx:id="sessionCountLabel" text="No active sessions" style="-fx-text-fill: rgba(255,255,255,0.6); -fx-cursor: default;">
                 <font><Font size="11"/></font>
             </Label>
-            <Label text="© 2024 QDC Laboratory" style="-fx-text-fill: rgba(255,255,255,0.4); -fx-cursor: default;">
+            <Label fx:id="footerBrandLabel" text="© 2024" style="-fx-text-fill: rgba(255,255,255,0.4); -fx-cursor: default;">
                 <font><Font size="10"/></font>
             </Label>
         </HBox>

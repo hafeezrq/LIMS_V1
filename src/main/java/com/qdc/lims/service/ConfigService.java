@@ -27,6 +27,7 @@ public class ConfigService {
     public void init() {
         refreshCache();
         ensureDefaults();
+        updateLabProfileCompletionFlag();
     }
 
     public void refreshCache() {
@@ -38,16 +39,23 @@ public class ConfigService {
     }
 
     private void ensureDefaults() {
-        createIfNotExists("CLINIC_NAME", "Quality Digital Clinic", "General");
-        createIfNotExists("CLINIC_ADDRESS", "123 Healthcare Ave, Medical City", "General");
-        createIfNotExists("CLINIC_PHONE", "+1 234 567 8900", "General");
-        createIfNotExists("CLINIC_EMAIL", "info@qdc-lims.com", "General");
+        createIfNotExists("APP_NAME", "QDC LIMS", "General");
 
-        createIfNotExists("CURRENCY_SYMBOL", "$", "Billing");
+        // Whitelabel clinic profile fields intentionally default to blank so the
+        // first-run experience prompts for real lab details.
+        createIfNotExists("CLINIC_NAME", "", "General");
+        createIfNotExists("CLINIC_ADDRESS", "", "General");
+        createIfNotExists("CLINIC_PHONE", "", "General");
+        createIfNotExists("CLINIC_EMAIL", "", "General");
+
+        createIfNotExists("LAB_PROFILE_COMPLETED", "false", "General");
+
+        createIfNotExists("CURRENCY_SYMBOL", "AUTO", "Billing");
         createIfNotExists("TAX_RATE_PERCENT", "0.0", "Billing");
 
-        createIfNotExists("REPORT_HEADER_TEXT", "Quality Digital Clinic Laboratory Report", "Reports");
-        createIfNotExists("REPORT_FOOTER_TEXT", "This is a computer generated report and does not require a signature.",
+        createIfNotExists("REPORT_HEADER_TEXT", "", "Reports");
+        createIfNotExists("REPORT_FOOTER_TEXT",
+                "This is a computer generated report and does not require a signature.",
                 "Reports");
         createIfNotExists("REPORT_LOGO_PATH", "", "Reports");
 
@@ -73,7 +81,56 @@ public class ConfigService {
         return cache.getOrDefault(key, defaultValue);
     }
 
+    /**
+     * Retrieves a trimmed configuration value.
+     *
+     * @param key configuration key
+     * @return trimmed value, or an empty string if missing
+     */
+    public String getTrimmed(String key) {
+        return getTrimmed(key, "");
+    }
+
+    /**
+     * Retrieves a trimmed configuration value with a default.
+     *
+     * @param key          configuration key
+     * @param defaultValue default value
+     * @return trimmed value
+     */
+    public String getTrimmed(String key, String defaultValue) {
+        String value = get(key, defaultValue);
+        return value == null ? "" : value.trim();
+    }
+
     public void set(String key, String value) {
+        setInternal(key, value, true);
+    }
+
+    /**
+     * Updates and persists the lab profile completion flag based on required
+     * branding fields.
+     */
+    public void updateLabProfileCompletionFlag() {
+        boolean complete = !getTrimmed("CLINIC_NAME").isBlank()
+                && !getTrimmed("CLINIC_ADDRESS").isBlank()
+                && !getTrimmed("CLINIC_PHONE").isBlank();
+
+        boolean current = Boolean.parseBoolean(getTrimmed("LAB_PROFILE_COMPLETED", "false"));
+        if (current != complete) {
+            setInternal("LAB_PROFILE_COMPLETED", Boolean.toString(complete), false);
+        }
+    }
+
+    /**
+     * @return whether the lab profile is complete
+     */
+    public boolean isLabProfileComplete() {
+        updateLabProfileCompletionFlag();
+        return Boolean.parseBoolean(getTrimmed("LAB_PROFILE_COMPLETED", "false"));
+    }
+
+    private void setInternal(String key, String value, boolean updateProfileFlag) {
         Optional<SystemConfiguration> opt = configRepository.findByKey(key);
         SystemConfiguration config;
 
@@ -89,5 +146,16 @@ public class ConfigService {
         config.setValue(value);
         configRepository.save(config);
         cache.put(key, value);
+
+        if (updateProfileFlag && isProfileField(key)) {
+            updateLabProfileCompletionFlag();
+        }
+    }
+
+    private boolean isProfileField(String key) {
+        return "CLINIC_NAME".equals(key)
+                || "CLINIC_ADDRESS".equals(key)
+                || "CLINIC_PHONE".equals(key)
+                || "CLINIC_EMAIL".equals(key);
     }
 }

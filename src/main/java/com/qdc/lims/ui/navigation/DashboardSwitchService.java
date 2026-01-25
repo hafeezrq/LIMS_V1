@@ -1,5 +1,6 @@
 package com.qdc.lims.ui.navigation;
 
+import com.qdc.lims.service.BrandingService;
 import com.qdc.lims.ui.SessionManager;
 import com.qdc.lims.entity.Role;
 import com.qdc.lims.entity.User;
@@ -20,9 +21,11 @@ import java.util.Set;
 public class DashboardSwitchService {
 
     private final ApplicationContext applicationContext;
+    private final BrandingService brandingService;
 
-    public DashboardSwitchService(ApplicationContext applicationContext) {
+    public DashboardSwitchService(ApplicationContext applicationContext, BrandingService brandingService) {
         this.applicationContext = applicationContext;
+        this.brandingService = brandingService;
     }
 
     /**
@@ -114,8 +117,8 @@ public class DashboardSwitchService {
             // Update the Role in SessionManager for this specific window
             SessionManager.setRole(currentStage, targetDashboard.name());
 
-            // Set Title from your Enum
-            currentStage.setTitle(targetDashboard.getWindowTitle());
+            // Tag the stage so branding can be applied consistently.
+            brandingService.tagStage(currentStage, targetDashboard.getWindowTitle());
             currentStage.setScene(new Scene(root));
 
             // Resize logic (Customize sizes as needed)

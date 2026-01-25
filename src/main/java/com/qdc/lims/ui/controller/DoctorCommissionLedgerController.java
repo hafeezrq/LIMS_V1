@@ -2,6 +2,7 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.CommissionLedger;
 import com.qdc.lims.repository.CommissionLedgerRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,6 +26,8 @@ public class DoctorCommissionLedgerController {
 
     @Autowired
     private CommissionLedgerRepository commissionRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private DatePicker startDatePicker;
@@ -58,6 +61,7 @@ public class DoctorCommissionLedgerController {
      */
     @FXML
     public void initialize() {
+        localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
         endDatePicker.setValue(LocalDate.now());
         setupTable();
@@ -159,7 +163,7 @@ public class DoctorCommissionLedgerController {
     }
 
     private String formatAmount(double amount) {
-        return String.format("$%.2f", amount);
+        return localeFormatService.formatCurrency(amount);
     }
 
     private double getBillAmount(CommissionLedger commission) {

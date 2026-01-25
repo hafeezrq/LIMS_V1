@@ -1,6 +1,7 @@
 package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.service.ConfigService;
+import com.qdc.lims.service.BrandingService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
@@ -19,6 +20,8 @@ public class SystemSettingsController {
 
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private BrandingService brandingService;
 
     // General Info
     @FXML
@@ -94,7 +97,17 @@ public class SystemSettingsController {
             configService.set("CURRENCY_SYMBOL", currencySymbolField.getText());
             configService.set("TAX_RATE_PERCENT", taxRateField.getText());
 
-            statusLabel.setText("Configuration saved successfully!");
+            configService.refreshCache();
+            configService.updateLabProfileCompletionFlag();
+            brandingService.refreshAllTaggedStageTitles();
+
+            boolean complete = configService.isLabProfileComplete();
+            statusLabel.setText(complete
+                    ? "Configuration saved successfully!"
+                    : "Saved, but lab profile is incomplete (name, address, phone).");
+
+            Stage stage = (Stage) clinicNameField.getScene().getWindow();
+            brandingService.tagStage(stage, "System Configuration");
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Success");

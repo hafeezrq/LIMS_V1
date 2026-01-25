@@ -2,6 +2,7 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.Payment;
 import com.qdc.lims.repository.PaymentRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -23,6 +24,8 @@ public class ExpenseController {
 
     @Autowired
     private PaymentRepository paymentRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private Button closeButton;
@@ -67,6 +70,7 @@ public class ExpenseController {
         setupTable();
         setupForm();
 
+        localeFormatService.applyDatePickerLocale(expenseDate, filterStartDate, filterEndDate);
         filterStartDate.setValue(LocalDate.now().withDayOfMonth(1));
         filterEndDate.setValue(LocalDate.now());
 
@@ -86,13 +90,13 @@ public class ExpenseController {
         idCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getId())));
         dateCol.setCellValueFactory(data -> {
             LocalDateTime dt = data.getValue().getTransactionDate();
-            return new SimpleStringProperty(dt != null ? dt.toLocalDate().toString() : "");
+            return new SimpleStringProperty(dt != null ? localeFormatService.formatDate(dt.toLocalDate()) : "");
         });
         categoryCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCategory()));
         descCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
         methodCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getPaymentMethod()));
         amountCol.setCellValueFactory(
-                data -> new SimpleStringProperty(String.format("%.2f", data.getValue().getAmount())));
+                data -> new SimpleStringProperty(localeFormatService.formatCurrency(data.getValue().getAmount())));
     }
 
     /**
@@ -106,7 +110,7 @@ public class ExpenseController {
                 return;
             }
 
-            double amount = Double.parseDouble(amountField.getText());
+            double amount = localeFormatService.parseNumber(amountField.getText());
 
             Payment payment = new Payment();
             payment.setType("EXPENSE");
@@ -146,7 +150,7 @@ public class ExpenseController {
             expenseTable.setItems(FXCollections.observableArrayList(expenses));
 
             double total = expenses.stream().mapToDouble(Payment::getAmount).sum();
-            totalExpensesLabel.setText(String.format("%.2f", total));
+            totalExpensesLabel.setText(localeFormatService.formatCurrency(total));
         }
     }
 

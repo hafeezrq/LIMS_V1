@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -20,6 +19,10 @@ public class ReportExportService {
 
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private BrandingService brandingService;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     private static final Font TITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
     private static final Font SUBTITLE_FONT = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.ITALIC);
@@ -62,9 +65,15 @@ public class ReportExportService {
             addCell(table, order.getPatient().getFullName(), DATA_FONT, false);
             addCell(table, order.getReferringDoctor() != null ? order.getReferringDoctor().getName() : "-", DATA_FONT,
                     false);
-            addCell(table, String.format("%.2f", order.getTotalAmount()), DATA_FONT, false);
-            addCell(table, String.format("%.2f", order.getPaidAmount()), DATA_FONT, false);
-            addCell(table, String.format("%.2f", order.getBalanceDue()), DATA_FONT, false);
+            addCell(table,
+                    localeFormatService.formatCurrency(order.getTotalAmount() != null ? order.getTotalAmount() : 0.0),
+                    DATA_FONT, false);
+            addCell(table,
+                    localeFormatService.formatCurrency(order.getPaidAmount() != null ? order.getPaidAmount() : 0.0),
+                    DATA_FONT, false);
+            addCell(table,
+                    localeFormatService.formatCurrency(order.getBalanceDue() != null ? order.getBalanceDue() : 0.0),
+                    DATA_FONT, false);
 
             grandTotal += (order.getTotalAmount() != null ? order.getTotalAmount() : 0);
             totalPaid += (order.getPaidAmount() != null ? order.getPaidAmount() : 0);
@@ -74,10 +83,10 @@ public class ReportExportService {
 
         // 3. Summary
         document.add(new Paragraph(" "));
-        document.add(new Paragraph("Total Revenue Generated: " + configService.get("CURRENCY_SYMBOL", "$")
-                + String.format("%.2f", grandTotal), HEADER_FONT));
+        document.add(new Paragraph("Total Revenue Generated: " + localeFormatService.formatCurrency(grandTotal),
+                HEADER_FONT));
         document.add(new Paragraph(
-                "Total Cash Collected: " + configService.get("CURRENCY_SYMBOL", "$") + String.format("%.2f", totalPaid),
+                "Total Cash Collected: " + localeFormatService.formatCurrency(totalPaid),
                 HEADER_FONT));
 
         // 4. Footer
@@ -94,33 +103,39 @@ public class ReportExportService {
             // Header
             writer.write("Order ID,Date/Time,Patient Name,Doctor,Total Amount,Paid Amount,Balance Due\n");
 
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
             for (LabOrder order : orders) {
-                writer.write(String.format("%d,%s,\"%s\",\"%s\",%.2f,%.2f,%.2f\n",
+                writer.write(String.format("%d,%s,\"%s\",\"%s\",%s,%s,%s\n",
                         order.getId(),
-                        order.getOrderDate().format(dtf),
+                        localeFormatService.formatDateTime(order.getOrderDate()),
                         order.getPatient().getFullName(),
                         order.getReferringDoctor() != null ? order.getReferringDoctor().getName() : "",
-                        order.getTotalAmount() != null ? order.getTotalAmount() : 0.0,
-                        order.getPaidAmount() != null ? order.getPaidAmount() : 0.0,
-                        order.getBalanceDue() != null ? order.getBalanceDue() : 0.0));
+                        localeFormatService.formatNumber(order.getTotalAmount() != null ? order.getTotalAmount() : 0.0),
+                        localeFormatService.formatNumber(order.getPaidAmount() != null ? order.getPaidAmount() : 0.0),
+                        localeFormatService.formatNumber(order.getBalanceDue() != null ? order.getBalanceDue() : 0.0)));
             }
         }
     }
 
     private void addHeader(Document doc, String reportTitle) throws DocumentException {
         // Clinic Name
-        String clinicName = configService.get("CLINIC_NAME", "Laboratory System");
-        Paragraph title = new Paragraph(clinicName, TITLE_FONT);
+        Paragraph title = new Paragraph(brandingService.getLabNameOrAppName(), TITLE_FONT);
         title.setAlignment(Element.ALIGN_CENTER);
         doc.add(title);
 
-        String address = configService.get("CLINIC_ADDRESS", "");
+        String address = brandingService.getClinicAddress();
         if (!address.isEmpty()) {
             Paragraph addr = new Paragraph(address, DATA_FONT);
             addr.setAlignment(Element.ALIGN_CENTER);
             doc.add(addr);
+        }
+
+        String phone = brandingService.getClinicPhone();
+        String email = brandingService.getClinicEmail();
+        if (!phone.isBlank() || !email.isBlank()) {
+            String contactLine = phone.isBlank() || email.isBlank() ? phone + email : phone + " | " + email;
+            Paragraph contact = new Paragraph(contactLine.trim(), DATA_FONT);
+            contact.setAlignment(Element.ALIGN_CENTER);
+            doc.add(contact);
         }
 
         doc.add(new Paragraph(" "));
@@ -131,7 +146,7 @@ public class ReportExportService {
     }
 
     private void addFooter(Document doc) throws DocumentException {
-        String footerText = configService.get("REPORT_FOOTER_TEXT", "System Generated Report");
+        String footerText = brandingService.getReportFooterText();
         Paragraph footer = new Paragraph(footerText, FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 8));
         footer.setAlignment(Element.ALIGN_CENTER);
         footer.setSpacingBefore(20);

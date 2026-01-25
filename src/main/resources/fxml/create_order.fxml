@@ -69,7 +69,7 @@
                             <Label fx:id="selectedTestsCountLabel" text="0" style="-fx-text-fill: #3498db; -fx-font-weight: bold;"/>
                             <Region HBox.hgrow="ALWAYS"/>
                             <Label text="Total Amount:" style="-fx-font-weight: bold;"/>
-                            <Label fx:id="totalAmountLabel" text="Rs. 0.00" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                            <Label fx:id="totalAmountLabel" text="0.00" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
                         </HBox>
                         
                         <!-- List of Selected Tests -->
@@ -82,14 +82,14 @@
                         <Separator/>
                         
                         <GridPane hgap="15" vgap="10">
-                            <Label text="Discount (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
+                            <Label text="Discount:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold;"/>
                             <TextField fx:id="discountField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="150"/>
                             
-                            <Label text="Cash Paid (Rs.):" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
+                            <Label text="Cash Paid:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold;"/>
                             <TextField fx:id="cashPaidField" text="0" promptText="0.00" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="150"/>
                             
                             <Label text="Balance:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold;"/>
-                            <Label fx:id="balanceLabel" text="Rs. 0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" 
+                            <Label fx:id="balanceLabel" text="0.00" GridPane.columnIndex="1" GridPane.rowIndex="2" 
                                    style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
                         </GridPane>
                     </VBox>

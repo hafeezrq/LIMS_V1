@@ -5,9 +5,9 @@ package com.qdc.lims.ui.navigation;
  * Centralizes dashboard metadata for consistent navigation.
  */
 public enum DashboardType {
-    ADMIN("Admin Dashboard", "/fxml/dashboard_admin.fxml", "QDC LIMS - Admin Dashboard", "ROLE_ADMIN"),
-    RECEPTION("Reception Dashboard", "/fxml/dashboard_reception.fxml", "QDC LIMS - Reception", "ROLE_RECEPTION"),
-    LAB("Lab Dashboard", "/fxml/dashboard_lab.fxml", "QDC LIMS - Laboratory", "ROLE_LAB", "ROLE_PATHOLOGIST");
+    ADMIN("Admin Dashboard", "/fxml/dashboard_admin.fxml", "Admin Dashboard", "ROLE_ADMIN"),
+    RECEPTION("Reception Dashboard", "/fxml/dashboard_reception.fxml", "Reception Dashboard", "ROLE_RECEPTION"),
+    LAB("Lab Dashboard", "/fxml/dashboard_lab.fxml", "Lab Dashboard", "ROLE_LAB", "ROLE_PATHOLOGIST");
 
     private final String displayName;
     private final String fxmlPath;

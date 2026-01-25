@@ -2,6 +2,7 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.LabOrder;
 import com.qdc.lims.repository.LabOrderRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -15,7 +16,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,14 +78,18 @@ public class LabWorklistController {
 
     private final LabOrderRepository orderRepository;
     private final ApplicationContext springContext;
+    private final LocaleFormatService localeFormatService;
     private List<LabOrder> allOrders;
 
     // Flag to show completed tests on initialization
     private boolean showCompletedOnInit = false;
 
-    public LabWorklistController(LabOrderRepository orderRepository, ApplicationContext springContext) {
+    public LabWorklistController(LabOrderRepository orderRepository,
+            ApplicationContext springContext,
+            LocaleFormatService localeFormatService) {
         this.orderRepository = orderRepository;
         this.springContext = springContext;
+        this.localeFormatService = localeFormatService;
     }
 
     /**
@@ -144,12 +148,11 @@ public class LabWorklistController {
                 cellData.getValue().getResults() != null ? cellData.getValue().getResults().size() : 0).asObject());
 
         orderDateColumn.setCellValueFactory(cellData -> {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
             if (cellData.getValue().getOrderDate() == null) {
                 return new javafx.beans.property.SimpleStringProperty("-");
             }
             return new javafx.beans.property.SimpleStringProperty(
-                    cellData.getValue().getOrderDate().format(formatter));
+                    localeFormatService.formatDateTime(cellData.getValue().getOrderDate()));
         });
 
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));

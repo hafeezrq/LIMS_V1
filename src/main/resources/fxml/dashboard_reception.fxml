@@ -194,7 +194,7 @@
     <!-- Bottom Status Bar -->
     <bottom>
         <HBox style="-fx-background-color: #27ae60; -fx-padding: 8;" spacing="15" alignment="CENTER_LEFT">
-            <Label text="QDC Laboratory - Reception" style="-fx-text-fill: white; -fx-font-size: 11;"/>
+            <Label fx:id="footerBrandLabel" text="Reception" style="-fx-text-fill: white; -fx-font-size: 11;"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 10;"/>
         </HBox>

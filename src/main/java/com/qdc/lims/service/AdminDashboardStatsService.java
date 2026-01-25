@@ -24,17 +24,20 @@ public class AdminDashboardStatsService {
     private final TestDefinitionRepository testDefinitionRepository;
     private final LabOrderRepository labOrderRepository;
     private final PaymentRepository paymentRepository;
+    private final LocaleFormatService localeFormatService;
 
     public AdminDashboardStatsService(UserRepository userRepository,
             DoctorRepository doctorRepository,
             TestDefinitionRepository testDefinitionRepository,
             LabOrderRepository labOrderRepository,
-            PaymentRepository paymentRepository) {
+            PaymentRepository paymentRepository,
+            LocaleFormatService localeFormatService) {
         this.userRepository = userRepository;
         this.doctorRepository = doctorRepository;
         this.testDefinitionRepository = testDefinitionRepository;
         this.labOrderRepository = labOrderRepository;
         this.paymentRepository = paymentRepository;
+        this.localeFormatService = localeFormatService;
     }
 
     public long getActiveDoctorsCount() {
@@ -70,6 +73,6 @@ public class AdminDashboardStatsService {
             }
         }
 
-        return String.format("$%.2f", orderIncome + miscIncome);
+        return localeFormatService.formatCurrency(orderIncome + miscIncome);
     }
 }

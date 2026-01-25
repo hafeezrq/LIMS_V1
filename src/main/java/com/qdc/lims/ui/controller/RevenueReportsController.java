@@ -2,6 +2,7 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.entity.LabOrder;
 import com.qdc.lims.repository.LabOrderRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -32,6 +32,8 @@ public class RevenueReportsController {
     private LabOrderRepository orderRepository;
     @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private Button closeButton;
@@ -80,6 +82,7 @@ public class RevenueReportsController {
 
         // Set default dates
         if (startDatePicker != null && endDatePicker != null) {
+            localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
             startDatePicker.setValue(LocalDate.now().minusDays(30)); // Default to last 30 days
             endDatePicker.setValue(LocalDate.now());
         }
@@ -96,7 +99,7 @@ public class RevenueReportsController {
             dateCol.setCellValueFactory(data -> {
                 LocalDateTime date = data.getValue().getOrderDate();
                 return new SimpleStringProperty(
-                        date != null ? date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
+                        date != null ? localeFormatService.formatDateTime(date) : "");
             });
         }
         if (patientCol != null) {
@@ -105,7 +108,7 @@ public class RevenueReportsController {
         }
         if (amountCol != null) {
             amountCol.setCellValueFactory(data -> new SimpleStringProperty(
-                    String.format("%.2f",
+                    localeFormatService.formatCurrency(
                             data.getValue().getTotalAmount() != null ? data.getValue().getTotalAmount() : 0.0)));
         }
         if (statusCol != null) {
@@ -148,23 +151,24 @@ public class RevenueReportsController {
                         .sum();
 
                 if (totalRevenueLabel != null) {
-                    totalRevenueLabel.setText(String.format("%.2f", total));
+                    totalRevenueLabel.setText(localeFormatService.formatCurrency(total));
                 }
                 if (totalPaidLabel != null) {
-                    totalPaidLabel.setText(String.format("%.2f", totalPaid));
+                    totalPaidLabel.setText(localeFormatService.formatCurrency(totalPaid));
                 }
                 if (totalOutstandingLabel != null) {
-                    totalOutstandingLabel.setText(String.format("%.2f", totalOutstanding));
+                    totalOutstandingLabel.setText(localeFormatService.formatCurrency(totalOutstanding));
                 }
                 if (totalCountLabel != null) {
                     totalCountLabel.setText(String.valueOf(orders.size()));
                 }
                 if (averageOrderLabel != null) {
                     double avg = orders.isEmpty() ? 0.0 : total / orders.size();
-                    averageOrderLabel.setText(String.format("%.2f", avg));
+                    averageOrderLabel.setText(localeFormatService.formatCurrency(avg));
                 }
                 if (periodLabel != null) {
-                    periodLabel.setText("Period: " + start + " to " + end + " | Source: Patient lab orders");
+                    periodLabel.setText("Period: " + localeFormatService.formatDate(start) + " to "
+                            + localeFormatService.formatDate(end) + " | Source: Patient lab orders");
                 }
                 if (reportTable != null) {
                     reportTable.setItems(FXCollections.observableArrayList(orders));
@@ -209,16 +213,16 @@ public class RevenueReportsController {
 
     private void resetSummary() {
         if (totalRevenueLabel != null) {
-            totalRevenueLabel.setText("0.00");
+            totalRevenueLabel.setText(localeFormatService.formatCurrency(0.0));
         }
         if (totalPaidLabel != null) {
-            totalPaidLabel.setText("0.00");
+            totalPaidLabel.setText(localeFormatService.formatCurrency(0.0));
         }
         if (totalOutstandingLabel != null) {
-            totalOutstandingLabel.setText("0.00");
+            totalOutstandingLabel.setText(localeFormatService.formatCurrency(0.0));
         }
         if (averageOrderLabel != null) {
-            averageOrderLabel.setText("0.00");
+            averageOrderLabel.setText(localeFormatService.formatCurrency(0.0));
         }
         if (totalCountLabel != null) {
             totalCountLabel.setText("0");

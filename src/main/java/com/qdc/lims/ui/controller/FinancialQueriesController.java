@@ -9,6 +9,7 @@ import com.qdc.lims.repository.CommissionLedgerRepository;
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.repository.PaymentRepository;
 import com.qdc.lims.repository.SupplierLedgerRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -41,6 +42,8 @@ public class FinancialQueriesController {
     private CommissionLedgerRepository commissionRepository;
     @Autowired
     private SupplierLedgerRepository supplierRepository;
+    @Autowired
+    private LocaleFormatService localeFormatService;
 
     @FXML
     private Button closeButton;
@@ -83,6 +86,7 @@ public class FinancialQueriesController {
     @FXML
     public void initialize() {
         setupTable();
+        localeFormatService.applyDatePickerLocale(startDatePicker, endDatePicker);
         startDatePicker.setValue(LocalDate.now().withDayOfMonth(1));
         endDatePicker.setValue(LocalDate.now());
         handleGenerateReport();
@@ -93,7 +97,7 @@ public class FinancialQueriesController {
         typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getType()));
         countCol.setCellValueFactory(data -> new SimpleIntegerProperty(data.getValue().getCount()).asObject());
         amountCol.setCellValueFactory(
-                data -> new SimpleStringProperty(String.format("$%.2f", data.getValue().getTotalAmount())));
+                data -> new SimpleStringProperty(localeFormatService.formatCurrency(data.getValue().getTotalAmount())));
 
         amountCol.setCellFactory(col -> new TableCell<FinancialCategorySummary, String>() {
             @Override
@@ -219,17 +223,17 @@ public class FinancialQueriesController {
         double totalExpense = list.stream().filter(s -> "EXPENSE".equals(s.getType()))
                 .mapToDouble(FinancialCategorySummary::getTotalAmount).sum();
 
-        totalIncomeLabel.setText(String.format("$%.2f", totalIncome));
-        totalExpenseLabel.setText(String.format("$%.2f", totalExpense));
-        netProfitLabel.setText(String.format("$%.2f", totalIncome - totalExpense));
+        totalIncomeLabel.setText(localeFormatService.formatCurrency(totalIncome));
+        totalExpenseLabel.setText(localeFormatService.formatCurrency(totalExpense));
+        netProfitLabel.setText(localeFormatService.formatCurrency(totalIncome - totalExpense));
         if (patientReceivableLabel != null) {
-            patientReceivableLabel.setText(String.format("$%.2f", patientReceivable));
+            patientReceivableLabel.setText(localeFormatService.formatCurrency(patientReceivable));
         }
         if (unpaidCommissionLabel != null) {
-            unpaidCommissionLabel.setText(String.format("$%.2f", unpaidCommission));
+            unpaidCommissionLabel.setText(localeFormatService.formatCurrency(unpaidCommission));
         }
         if (supplierPayableLabel != null) {
-            supplierPayableLabel.setText(String.format("$%.2f", supplierPayable));
+            supplierPayableLabel.setText(localeFormatService.formatCurrency(supplierPayable));
         }
 
         // Pie Chart (Expenses Only)

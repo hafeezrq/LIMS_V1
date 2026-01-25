@@ -9,6 +9,7 @@ import com.qdc.lims.repository.DoctorRepository;
 import com.qdc.lims.repository.PatientRepository;
 import com.qdc.lims.repository.PanelRepository;
 import com.qdc.lims.repository.TestDefinitionRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import com.qdc.lims.service.OrderService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -21,7 +22,6 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.springframework.stereotype.Component;
 
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,10 +76,9 @@ public class CreateOrderController {
     private final TestDefinitionRepository testRepository;
     private final PanelRepository panelRepository;
     private final OrderService orderService;
+    private final LocaleFormatService localeFormatService;
 
     private Patient selectedPatient;
-    private final DecimalFormat df = new DecimalFormat("#,##0.00");
-
     // Map to track selected tests across all categories
     private final Map<Long, CheckBox> testCheckboxMap = new HashMap<>();
     private final Set<TestDefinition> selectedTests = new HashSet<>();
@@ -94,12 +93,14 @@ public class CreateOrderController {
             DoctorRepository doctorRepository,
             TestDefinitionRepository testRepository,
             PanelRepository panelRepository,
-            OrderService orderService) {
+            OrderService orderService,
+            LocaleFormatService localeFormatService) {
         this.patientRepository = patientRepository;
         this.doctorRepository = doctorRepository;
         this.testRepository = testRepository;
         this.panelRepository = panelRepository;
         this.orderService = orderService;
+        this.localeFormatService = localeFormatService;
     }
 
     @FXML
@@ -117,6 +118,8 @@ public class CreateOrderController {
         selectedTestsListView.setItems(selectedTestNames);
 
         messageLabel.setText("");
+        totalAmountLabel.setText(localeFormatService.formatCurrency(0.0));
+        balanceLabel.setText(localeFormatService.formatCurrency(0.0));
     }
 
     /**
@@ -356,7 +359,7 @@ public class CreateOrderController {
             }
         }
         selectedTestsCountLabel.setText(String.valueOf(selectedTests.size()));
-        totalAmountLabel.setText("Rs. " + df.format(total.doubleValue()));
+        totalAmountLabel.setText(localeFormatService.formatCurrency(total.doubleValue()));
 
         calculateBalance();
     }
@@ -371,7 +374,7 @@ public class CreateOrderController {
         double discount = parseDouble(discountField.getText());
         double cashPaid = parseDouble(cashPaidField.getText());
         double balance = total.doubleValue() - discount - cashPaid;
-        balanceLabel.setText("Rs. " + df.format(balance));
+        balanceLabel.setText(localeFormatService.formatCurrency(balance));
 
         if (balance < 0) {
             balanceLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
@@ -452,11 +455,11 @@ public class CreateOrderController {
                 new javafx.scene.control.Separator(),
                 new Label("MRN: " + order.getPatient().getMrn()),
                 new Label("Tests: " + order.getResults().size()),
-                new Label("Total: Rs. " + df.format(order.getTotalAmount())),
-                new Label("Discount: Rs. "
-                        + df.format(order.getDiscountAmount() != null ? order.getDiscountAmount() : 0)),
-                new Label("Paid: Rs. " + df.format(order.getPaidAmount())),
-                new Label("Balance Due: Rs. " + df.format(order.getBalanceDue())));
+                new Label("Total: " + localeFormatService.formatCurrency(order.getTotalAmount())),
+                new Label("Discount: " + localeFormatService.formatCurrency(
+                        order.getDiscountAmount() != null ? order.getDiscountAmount() : 0)),
+                new Label("Paid: " + localeFormatService.formatCurrency(order.getPaidAmount())),
+                new Label("Balance Due: " + localeFormatService.formatCurrency(order.getBalanceDue())));
         summaryBox.getChildren().get(0).setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #27ae60;");
 
         // Print buttons
@@ -564,7 +567,7 @@ public class CreateOrderController {
         sb.append("=====================================\n\n");
         sb.append("Receipt #: ").append(order.getId()).append("\n");
         sb.append("Date: ")
-                .append(order.getOrderDate().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+                .append(localeFormatService.formatDateTime(order.getOrderDate()))
                 .append("\n\n");
         sb.append("--- PATIENT DETAILS ---\n");
         sb.append("Name: ").append(order.getPatient().getFullName()).append("\n");
@@ -575,16 +578,20 @@ public class CreateOrderController {
 
         for (var result : order.getResults()) {
             sb.append("* ").append(result.getTestDefinition().getTestName());
-            sb.append(" - Rs. ").append(df.format(result.getTestDefinition().getPrice())).append("\n");
+            sb.append(" - ").append(localeFormatService.formatCurrency(
+                    result.getTestDefinition().getPrice() != null
+                            ? result.getTestDefinition().getPrice().doubleValue()
+                            : 0.0))
+                    .append("\n");
         }
 
         sb.append("\n--- BILLING ---\n");
-        sb.append("Subtotal:  Rs. ").append(df.format(order.getTotalAmount())).append("\n");
+        sb.append("Subtotal:  ").append(localeFormatService.formatCurrency(order.getTotalAmount())).append("\n");
         if (order.getDiscountAmount() != null && order.getDiscountAmount() > 0) {
-            sb.append("Discount:  Rs. ").append(df.format(order.getDiscountAmount())).append("\n");
+            sb.append("Discount:  ").append(localeFormatService.formatCurrency(order.getDiscountAmount())).append("\n");
         }
-        sb.append("Paid:      Rs. ").append(df.format(order.getPaidAmount())).append("\n");
-        sb.append("Balance:   Rs. ").append(df.format(order.getBalanceDue())).append("\n\n");
+        sb.append("Paid:      ").append(localeFormatService.formatCurrency(order.getPaidAmount())).append("\n");
+        sb.append("Balance:   ").append(localeFormatService.formatCurrency(order.getBalanceDue())).append("\n\n");
         sb.append("=====================================\n");
         sb.append("    Thank you for choosing QDC!\n");
         sb.append("    Results typically ready in 24hrs\n");
@@ -607,7 +614,7 @@ public class CreateOrderController {
         sb.append("--------------------------------\n");
         sb.append("Rcpt#: ").append(order.getId()).append("\n");
         sb.append("Date: ")
-                .append(order.getOrderDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yy HH:mm")))
+                .append(localeFormatService.formatDateTime(order.getOrderDate()))
                 .append("\n");
         sb.append("--------------------------------\n");
 
@@ -622,18 +629,25 @@ public class CreateOrderController {
         sb.append("TESTS:\n");
         for (var result : order.getResults()) {
             String testName = truncate(result.getTestDefinition().getTestName(), 18);
-            String price = df.format(result.getTestDefinition().getPrice());
+            String price = localeFormatService.formatCurrency(
+                    result.getTestDefinition().getPrice() != null
+                            ? result.getTestDefinition().getPrice().doubleValue()
+                            : 0.0);
             sb.append(String.format("%-18s %8s\n", testName, price));
         }
         sb.append("--------------------------------\n");
 
         // Billing - right-aligned amounts
-        sb.append(String.format("%-12s Rs.%10s\n", "Total:", df.format(order.getTotalAmount())));
+        sb.append(String.format("%-12s %10s\n", "Total:",
+                localeFormatService.formatCurrency(order.getTotalAmount())));
         if (order.getDiscountAmount() != null && order.getDiscountAmount() > 0) {
-            sb.append(String.format("%-12s Rs.%10s\n", "Discount:", df.format(order.getDiscountAmount())));
+            sb.append(String.format("%-12s %10s\n", "Discount:",
+                    localeFormatService.formatCurrency(order.getDiscountAmount())));
         }
-        sb.append(String.format("%-12s Rs.%10s\n", "Paid:", df.format(order.getPaidAmount())));
-        sb.append(String.format("%-12s Rs.%10s\n", "Balance:", df.format(order.getBalanceDue())));
+        sb.append(String.format("%-12s %10s\n", "Paid:",
+                localeFormatService.formatCurrency(order.getPaidAmount())));
+        sb.append(String.format("%-12s %10s\n", "Balance:",
+                localeFormatService.formatCurrency(order.getBalanceDue())));
         sb.append("--------------------------------\n");
 
         // Footer - compact
@@ -679,8 +693,8 @@ public class CreateOrderController {
         cashPaidField.setText("0");
 
         selectedTestsCountLabel.setText("0");
-        totalAmountLabel.setText("Rs. 0.00");
-        balanceLabel.setText("Rs. 0.00");
+        totalAmountLabel.setText(localeFormatService.formatCurrency(0.0));
+        balanceLabel.setText(localeFormatService.formatCurrency(0.0));
 
         messageLabel.setText("");
     }
@@ -692,11 +706,7 @@ public class CreateOrderController {
     }
 
     private double parseDouble(String text) {
-        try {
-            return Double.parseDouble(text.trim());
-        } catch (NumberFormatException e) {
-            return 0.0;
-        }
+        return localeFormatService.parseNumber(text);
     }
 
     private void showError(String message) {

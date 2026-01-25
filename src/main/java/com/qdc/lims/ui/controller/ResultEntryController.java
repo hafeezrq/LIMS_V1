@@ -5,6 +5,7 @@ import com.qdc.lims.entity.LabOrder;
 import com.qdc.lims.entity.LabResult;
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.repository.LabResultRepository;
+import com.qdc.lims.service.LocaleFormatService;
 import com.qdc.lims.service.ResultService;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -16,7 +17,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -69,14 +69,17 @@ public class ResultEntryController {
     private final LabOrderRepository orderRepository;
     private final LabResultRepository resultRepository;
     private final ResultService resultService;
+    private final LocaleFormatService localeFormatService;
     private LabOrder currentOrder;
 
     public ResultEntryController(LabOrderRepository orderRepository,
             LabResultRepository resultRepository,
-            ResultService resultService) {
+            ResultService resultService,
+            LocaleFormatService localeFormatService) {
         this.orderRepository = orderRepository;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
+        this.localeFormatService = localeFormatService;
     }
 
     public void setOrder(LabOrder order) {
@@ -295,8 +298,7 @@ public class ResultEntryController {
         nameLabel.setText(currentOrder.getPatient().getFullName());
         ageGenderLabel.setText(currentOrder.getPatient().getAge() + " / " + currentOrder.getPatient().getGender());
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        orderDateLabel.setText(currentOrder.getOrderDate().format(formatter));
+        orderDateLabel.setText(localeFormatService.formatDateTime(currentOrder.getOrderDate()));
 
         // Load results
         resultsTable.setItems(FXCollections.observableArrayList(currentOrder.getResults()));
