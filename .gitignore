@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### OS / Generated ###
+.DS_Store
+docs/apidocs/
+updated_seed_data_test.sql
+utdate_test_data.sql

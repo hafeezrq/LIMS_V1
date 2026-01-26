@@ -5,6 +5,8 @@
 
 **NOTE**
 - Seed data runs only in the `dev` or `test` profile. Example: `SPRING_PROFILES_ACTIVE=dev`.
+- Javadocs are generated on demand using: `./mvnw -Pdocs verify`
+- The default profile is `prod`. Switch to dev/test with `SPRING_PROFILES_ACTIVE=dev` or `SPRING_PROFILES_ACTIVE=test`.
 
 **Safe Data Entry Order (Empty Database)**
 1. Create Admin (first run prompt).
@@ -18,3 +20,22 @@
 9. Register Patients.
 10. Create Lab Orders.
 11. Enter Results in Lab.
+
+**Backup Retention (Manual Management)**
+- Automatic pruning is disabled (`qdc.backup.retention-days=0`).
+- Backups are stored under the app data folder:
+1. macOS: `~/Library/Application Support/QDC LIMS/Backups`
+2. Windows: `%APPDATA%\\QDC LIMS\\Backups`
+3. Linux: `~/.local/share/qdc-lims/Backups`
+- To manage storage, periodically move older `.zip` backups to external storage or delete them manually.
+
+**Production Build (Recommended)**
+1. Build a native installer with bundled runtime:
+```sh
+./mvnw -DskipTests clean package jpackage
+```
+2. This uses the `badass-jlink` plugin and produces an installer under `target/`.
+
+**Minimum Windows Requirements**
+1. Windows 10 64-bit or Windows 11.
+2. If distributing a plain JAR instead of the installer, Java 21 must be installed.

@@ -40,6 +40,9 @@ public class BackupService {
     @Value("${spring.datasource.password:}")
     private String jdbcPassword;
 
+    @Value("${qdc.backup.retention-days:0}")
+    private int retentionDays;
+
     public BackupService(DataSource dataSource, BackupSettingsService settings) {
         this.dataSource = dataSource;
         this.settings = settings;
@@ -73,8 +76,8 @@ public class BackupService {
             // Update daily marker
             settings.setLastBackupDate(LocalDate.now());
 
-            // Keep last 30 days by default
-            applyRetention(30);
+            // Optional retention (0 = disabled)
+            applyRetention(retentionDays);
 
             // Cleanup best-effort
             try {
