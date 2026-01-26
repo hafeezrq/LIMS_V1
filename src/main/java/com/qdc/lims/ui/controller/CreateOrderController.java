@@ -13,6 +13,7 @@ import com.qdc.lims.service.LocaleFormatService;
 import com.qdc.lims.service.OrderService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -120,6 +121,8 @@ public class CreateOrderController {
         messageLabel.setText("");
         totalAmountLabel.setText(localeFormatService.formatCurrency(0.0));
         balanceLabel.setText(localeFormatService.formatCurrency(0.0));
+
+        patientSearchField.setOnAction(event -> handleSearchPatient());
     }
 
     /**
@@ -742,17 +745,81 @@ public class CreateOrderController {
         Dialog<Patient> dialog = new Dialog<>();
         dialog.setTitle("Multiple Patients Found");
         dialog.setHeaderText(patients.size() + " patients match your search. Please select one:");
-        dialog.getDialogPane().setContent(listView);
+        Label selectionHint = new Label("Double-click a patient or click OK to confirm selection.");
+        selectionHint.setStyle("-fx-text-fill: #7f8c8d;");
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #e74c3c;");
+
+        VBox content = new VBox(10, listView, selectionHint, errorLabel);
+        content.setPadding(new Insets(10));
+        dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        dialog.setResultConverter(button -> {
-            if (button == ButtonType.OK) {
-                return listView.getSelectionModel().getSelectedItem();
-            }
-            return null;
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        okButton.setDisable(true);
+
+        listView.getSelectionModel().selectedItemProperty().addListener((obs, old, selected) -> {
+            okButton.setDisable(selected == null);
+            errorLabel.setText("");
         });
 
+        okButton.addEventFilter(ActionEvent.ACTION, event -> {
+            Patient selected = listView.getSelectionModel().getSelectedItem();
+            if (selected == null) {
+                errorLabel.setText("Please select a patient.");
+                event.consume();
+                return;
+            }
+            if (!confirmPatientSelection(selected)) {
+                event.consume();
+                return;
+            }
+            dialog.setResult(selected);
+            dialog.close();
+        });
+
+        listView.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                Patient selected = listView.getSelectionModel().getSelectedItem();
+                if (selected != null && confirmPatientSelection(selected)) {
+                    dialog.setResult(selected);
+                    dialog.close();
+                }
+            }
+        });
+
+        listView.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                Patient selected = listView.getSelectionModel().getSelectedItem();
+                if (selected != null && confirmPatientSelection(selected)) {
+                    dialog.setResult(selected);
+                    dialog.close();
+                }
+            }
+        });
+
+        dialog.setResultConverter(button -> button == ButtonType.OK ? dialog.getResult() : null);
+
         return dialog.showAndWait().orElse(null);
+    }
+
+    private boolean confirmPatientSelection(Patient patient) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Patient");
+        confirm.setHeaderText("Use this patient?");
+        String mobile = patient.getMobileNumber() != null ? patient.getMobileNumber() : "N/A";
+        String city = patient.getCity() != null ? patient.getCity() : "N/A";
+        String cnic = patient.getCnic() != null ? patient.getCnic() : "N/A";
+        confirm.setContentText(String.format(
+                "%s (MRN: %s)\nAge: %d | Gender: %s\nMobile: %s | City: %s\nCNIC: %s",
+                patient.getFullName(),
+                patient.getMrn(),
+                patient.getAge(),
+                patient.getGender(),
+                mobile,
+                city,
+                cnic));
+        return confirm.showAndWait().filter(ButtonType.OK::equals).isPresent();
     }
 
     // Call this method whenever tests are added/removed
