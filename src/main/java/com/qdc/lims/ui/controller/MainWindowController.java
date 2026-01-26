@@ -6,7 +6,9 @@ import com.qdc.lims.entity.User;
 import com.qdc.lims.service.AuthService;
 import com.qdc.lims.service.BrandingService;
 import com.qdc.lims.service.ConfigService;
+import com.qdc.lims.service.PasswordPolicyService;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -51,6 +53,7 @@ public class MainWindowController {
     private final AuthService authService;
     private final BrandingService brandingService;
     private final ConfigService configService;
+    private final PasswordPolicyService passwordPolicyService;
 
     @FXML
     private BorderPane mainContainer;
@@ -116,11 +119,13 @@ public class MainWindowController {
     public MainWindowController(ApplicationContext applicationContext,
             AuthService authService,
             BrandingService brandingService,
-            ConfigService configService) {
+            ConfigService configService,
+            PasswordPolicyService passwordPolicyService) {
         this.applicationContext = applicationContext;
         this.authService = authService;
         this.brandingService = brandingService;
         this.configService = configService;
+        this.passwordPolicyService = passwordPolicyService;
     }
 
     @FXML
@@ -617,6 +622,9 @@ public class MainWindowController {
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: #e74c3c;");
 
+        Label passwordHintLabel = new Label(passwordPolicyService.getPolicyHint());
+        passwordHintLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11;");
+
         // Role indicator
         String roleColor = switch (targetRole) {
             case ADMIN -> "#e74c3c";
@@ -632,6 +640,7 @@ public class MainWindowController {
                 roleLabel,
                 new VBox(5, new Label("Username:"), usernameField),
                 new VBox(5, new Label("Password:"), passwordField),
+                passwordHintLabel,
                 errorLabel);
 
         dialog.getDialogPane().setContent(content);
@@ -658,21 +667,40 @@ public class MainWindowController {
             }
         });
 
-        // Convert the result
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == loginButtonType) {
-                String username = usernameField.getText().trim();
-                String password = passwordField.getText();
+        loginButton.addEventFilter(ActionEvent.ACTION, event -> {
+            String username = usernameField.getText().trim();
+            String password = passwordField.getText();
 
-                if (authService.authenticate(username, password)) {
-                    return authService.getUser(username);
-                } else {
-                    errorLabel.setText("Invalid username or password");
-                    return null;
+            if (authService.authenticate(username, password)) {
+                User user = authService.getUser(username);
+                if (user != null) {
+                    dialog.setResult(user);
+                    dialog.close();
+                    return;
                 }
+                errorLabel.setText("Login failed. Please try again.");
+                event.consume();
+                return;
             }
-            return null;
+
+            User user = authService.getUser(username);
+            if (user == null) {
+                errorLabel.setText("Username not found.");
+            } else if (!user.isEnabled()) {
+                errorLabel.setText("Account is disabled. Contact an administrator.");
+            } else if (!user.isAccountNonLocked()) {
+                errorLabel.setText("Account is locked. Contact an administrator.");
+            } else if (!user.isAccountNonExpired()) {
+                errorLabel.setText("Account has expired. Contact an administrator.");
+            } else if (!user.isCredentialsNonExpired()) {
+                errorLabel.setText("Password has expired. Contact an administrator.");
+            } else {
+                errorLabel.setText("Incorrect password.");
+            }
+            event.consume();
         });
+
+        dialog.setResultConverter(dialogButton -> dialogButton == loginButtonType ? dialog.getResult() : null);
 
         return dialog;
     }

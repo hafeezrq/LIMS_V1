@@ -24,5 +24,8 @@ public class PasswordPolicyService {
         }
         return Optional.empty();
     }
-}
 
+    public String getPolicyHint() {
+        return "Password must be at least 8 characters and include upper, lower, number, and symbol.";
+    }
+}
