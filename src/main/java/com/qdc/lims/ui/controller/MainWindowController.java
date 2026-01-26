@@ -193,11 +193,7 @@ public class MainWindowController {
             welcomeTitleLabel.setText(labName);
         }
         if (welcomeSubtitleLabel != null) {
-            if (labName.equals(appName)) {
-                welcomeSubtitleLabel.setText("Laboratory Information Management System");
-            } else {
-                welcomeSubtitleLabel.setText(appName + " - Laboratory Information Management System");
-            }
+            welcomeSubtitleLabel.setText("Laboratory Information Management System");
         }
         if (footerBrandLabel != null) {
             footerBrandLabel.setText(brandingService.getCopyrightLine());

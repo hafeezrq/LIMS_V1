@@ -8,6 +8,8 @@ import com.qdc.lims.ui.util.LogoutUtil;
 import com.qdc.lims.entity.LabOrder;
 import com.qdc.lims.entity.LabResult;
 import com.qdc.lims.entity.Patient;
+import com.qdc.lims.entity.ReferenceRange;
+import com.qdc.lims.entity.TestDefinition;
 import com.qdc.lims.entity.User; // <--- ADDED THIS IMPORT TO FIX THE ERROR
 import com.qdc.lims.repository.LabOrderRepository;
 import com.qdc.lims.service.LocaleFormatService;
@@ -27,12 +29,13 @@ import javafx.print.PrinterJob;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -698,8 +701,12 @@ public class ReceptionDashboardController {
         content.setPrefWidth(500);
 
         Patient patient = order.getPatient();
-        content.getChildren().add(new Label("Patient: " + patient.getFullName()));
-        content.getChildren().add(new Label("MRN: " + patient.getMrn()));
+        String patientName = patient != null && patient.getFullName() != null ? patient.getFullName() : "-";
+        String patientMrn = patient != null && patient.getMrn() != null ? patient.getMrn() : "-";
+        String patientAge = patient != null ? String.valueOf(patient.getAge()) : "-";
+        String patientGender = patient != null && patient.getGender() != null ? patient.getGender() : "-";
+        content.getChildren().add(new Label("Patient: " + patientName));
+        content.getChildren().add(new Label("MRN: " + patientMrn));
         content.getChildren().add(new Separator());
         content.getChildren().add(new Label("Test Results:"));
 
@@ -803,49 +810,206 @@ public class ReceptionDashboardController {
         double safeTopInset = Math.min(topInset, printableHeight * 0.45);
         double contentWidth = Math.min(620, printableWidth * 0.9);
 
-        TextFlow flow = new TextFlow();
-        flow.setPrefWidth(contentWidth);
-        flow.setLineSpacing(4);
-        flow.setTextAlignment(TextAlignment.LEFT);
         Patient patient = order.getPatient();
-        Text header = new Text("LABORATORY TEST REPORT\n");
-        header.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-
-        Text patientInfo = new Text(
-                "\nPatient: " + patient.getFullName() + "\n" +
-                        "MRN: " + patient.getMrn() + "\n" +
-                        "Age/Gender: " + patient.getAge() + " / " + patient.getGender() + "\n" +
-                        "Order Date: " + localeFormatService.formatDateTime(order.getOrderDate()) + "\n");
-
-        String separator = "-".repeat(52);
-        StringBuilder results = new StringBuilder("\nTEST RESULTS\n" + separator + "\n");
-        if (order.getResults() != null) {
-            for (LabResult result : order.getResults()) {
-                String testName = result.getTestDefinition() != null ? result.getTestDefinition().getTestName()
-                        : "Test";
-                String value = result.getResultValue() != null ? result.getResultValue() : "-";
-                String flag = result.isAbnormal() ? " *ABNORMAL*" : "";
-                results.append(testName).append(": ").append(value).append(flag).append("\n");
-            }
-        }
-        results.append(separator).append("\n\n");
-        Text resultsText = new Text(results.toString());
-        Text footer = new Text(
-                "Report Generated: "
-                        + localeFormatService.formatDateTime(LocalDateTime.now()) + "\n" +
-                        "This is a computer-generated report.");
-        footer.setStyle("-fx-font-size: 10; -fx-fill: #555555;");
-
-        flow.getChildren().addAll(header, patientInfo, resultsText, footer);
-        VBox content = new VBox(flow);
+        String patientName = patient != null && patient.getFullName() != null ? patient.getFullName() : "-";
+        String patientMrn = patient != null && patient.getMrn() != null ? patient.getMrn() : "-";
+        String patientAge = patient != null ? String.valueOf(patient.getAge()) : "-";
+        String patientGender = patient != null && patient.getGender() != null ? patient.getGender() : "-";
+        VBox content = new VBox(8);
         content.setAlignment(Pos.TOP_LEFT);
         content.setPrefWidth(contentWidth);
         content.setPadding(new Insets(safeTopInset, 24, 28, 24));
+
+        Label title = new Label("LABORATORY TEST REPORT");
+        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+
+        GridPane patientInfo = new GridPane();
+        patientInfo.setHgap(16);
+        patientInfo.setVgap(4);
+        patientInfo.setPrefWidth(contentWidth);
+
+        int row = 0;
+        patientInfo.add(new Label("Patient:"), 0, row);
+        patientInfo.add(new Label(patientName), 1, row++);
+        patientInfo.add(new Label("MRN:"), 0, row);
+        patientInfo.add(new Label(patientMrn), 1, row++);
+        patientInfo.add(new Label("Age:"), 0, row);
+        patientInfo.add(new Label(patientAge), 1, row++);
+        patientInfo.add(new Label("Gender:"), 0, row);
+        patientInfo.add(new Label(patientGender), 1, row++);
+        patientInfo.add(new Label("Order Date:"), 0, row);
+        patientInfo.add(new Label(localeFormatService.formatDateTime(order.getOrderDate())), 1, row++);
+        patientInfo.add(new Label("Printed:"), 0, row);
+        patientInfo.add(new Label(localeFormatService.formatDateTime(LocalDateTime.now())), 1, row++);
+        patientInfo.add(new Label("Referred By:"), 0, row);
+        patientInfo.add(new Label(order.getReferringDoctor() != null
+                ? order.getReferringDoctor().getName()
+                : "-"), 1, row++);
+
+        Label resultsHeader = new Label(" ");
+        VBox resultsSections = buildResultsSections(order, contentWidth);
+
+        Label footer = new Label("This is a computer-generated report.");
+        footer.setStyle("-fx-font-size: 10; -fx-text-fill: #555555;");
+
+        content.getChildren().addAll(title, patientInfo, resultsHeader, resultsSections, footer);
 
         StackPane page = new StackPane(content);
         page.setPrefSize(printableWidth, printableHeight);
         StackPane.setAlignment(content, Pos.TOP_CENTER);
         return page;
+    }
+
+    private VBox buildResultsSections(LabOrder order, double contentWidth) {
+        VBox sections = new VBox(10);
+        sections.setPrefWidth(contentWidth);
+
+        List<LabResult> results = order.getResults() != null ? order.getResults() : List.of();
+        Map<String, List<LabResult>> byDepartment = results.stream()
+                .collect(Collectors.groupingBy(result -> {
+                    if (result.getTestDefinition() != null
+                            && result.getTestDefinition().getDepartment() != null
+                            && result.getTestDefinition().getDepartment().getName() != null) {
+                        return result.getTestDefinition().getDepartment().getName();
+                    }
+                    return "Other";
+                }, java.util.TreeMap::new, Collectors.toList()));
+
+        for (Map.Entry<String, List<LabResult>> entry : byDepartment.entrySet()) {
+            Label deptLabel = new Label(entry.getKey());
+            deptLabel.setStyle("-fx-font-weight: bold; -fx-underline: true; -fx-font-size: 13;");
+
+            GridPane table = new GridPane();
+            table.setHgap(12);
+            table.setVgap(6);
+            table.setPrefWidth(contentWidth);
+
+            ColumnConstraints testCol = new ColumnConstraints();
+            testCol.setPercentWidth(40);
+            ColumnConstraints resultCol = new ColumnConstraints();
+            resultCol.setPercentWidth(15);
+            ColumnConstraints unitCol = new ColumnConstraints();
+            unitCol.setPercentWidth(15);
+            ColumnConstraints refCol = new ColumnConstraints();
+            refCol.setPercentWidth(30);
+            table.getColumnConstraints().addAll(testCol, resultCol, unitCol, refCol);
+
+            Label testHeader = new Label("Test Name");
+            Label resultHeader = new Label("Result");
+            Label unitHeader = new Label("Unit");
+            Label refHeader = new Label("Reference Range");
+            testHeader.setStyle("-fx-font-weight: bold; -fx-underline: true;");
+            resultHeader.setStyle("-fx-font-weight: bold; -fx-underline: true;");
+            unitHeader.setStyle("-fx-font-weight: bold; -fx-underline: true;");
+            refHeader.setStyle("-fx-font-weight: bold; -fx-underline: true;");
+            table.add(testHeader, 0, 0);
+            table.add(resultHeader, 1, 0);
+            table.add(unitHeader, 2, 0);
+            table.add(refHeader, 3, 0);
+
+            List<LabResult> departmentResults = entry.getValue().stream()
+                    .sorted((a, b) -> {
+                        String aName = a.getTestDefinition() != null ? a.getTestDefinition().getTestName() : "";
+                        String bName = b.getTestDefinition() != null ? b.getTestDefinition().getTestName() : "";
+                        return aName.compareToIgnoreCase(bName);
+                    })
+                    .collect(Collectors.toList());
+
+            int row = 1;
+            for (LabResult result : departmentResults) {
+                TestDefinition test = result.getTestDefinition();
+                String testName = test != null && test.getTestName() != null ? test.getTestName() : "-";
+                String value = result.getResultValue() != null ? result.getResultValue() : "-";
+                String unit = test != null && test.getUnit() != null ? test.getUnit() : "-";
+                String reference = buildReferenceRange(test, order.getPatient());
+
+                Label testLabel = new Label(testName);
+                Label valueLabel = new Label(value);
+                Label unitLabel = new Label(unit);
+                Label refLabel = new Label(reference);
+
+                if (result.isAbnormal()) {
+                    valueLabel.setStyle("-fx-font-weight: bold;");
+                }
+
+                table.add(testLabel, 0, row);
+                table.add(valueLabel, 1, row);
+                table.add(unitLabel, 2, row);
+                table.add(refLabel, 3, row);
+                row++;
+            }
+
+            sections.getChildren().addAll(deptLabel, table);
+        }
+
+        if (sections.getChildren().isEmpty()) {
+            sections.getChildren().add(new Label("No results available."));
+        }
+
+        return sections;
+    }
+
+    private String buildReferenceRange(TestDefinition test, Patient patient) {
+        if (test == null) {
+            return "-";
+        }
+        Integer age = patient != null ? patient.getAge() : null;
+        String gender = patient != null ? patient.getGender() : null;
+
+        if (test.getRanges() != null && !test.getRanges().isEmpty()) {
+            for (ReferenceRange range : test.getRanges()) {
+                if (!matchesRange(range, age, gender)) {
+                    continue;
+                }
+                String min = range.getMinVal() != null
+                        ? localeFormatService.formatNumber(range.getMinVal().doubleValue())
+                        : null;
+                String max = range.getMaxVal() != null
+                        ? localeFormatService.formatNumber(range.getMaxVal().doubleValue())
+                        : null;
+                return formatMinMax(min, max);
+            }
+        }
+
+        String min = test.getMinRange() != null
+                ? localeFormatService.formatNumber(test.getMinRange().doubleValue())
+                : null;
+        String max = test.getMaxRange() != null
+                ? localeFormatService.formatNumber(test.getMaxRange().doubleValue())
+                : null;
+        return formatMinMax(min, max);
+    }
+
+    private boolean matchesRange(ReferenceRange range, Integer age, String gender) {
+        if (range == null) {
+            return false;
+        }
+        if (gender != null && range.getGender() != null && !"Both".equalsIgnoreCase(range.getGender())
+                && !range.getGender().equalsIgnoreCase(gender)) {
+            return false;
+        }
+        if (age != null) {
+            if (range.getMinAge() != null && age < range.getMinAge()) {
+                return false;
+            }
+            if (range.getMaxAge() != null && age > range.getMaxAge()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private String formatMinMax(String min, String max) {
+        if (min != null && max != null) {
+            return min + " - " + max;
+        }
+        if (min != null) {
+            return "≥ " + min;
+        }
+        if (max != null) {
+            return "≤ " + max;
+        }
+        return "-";
     }
 
     private String getCurrentUsername() {

@@ -70,7 +70,7 @@
             
             <!-- Instructions -->
             <VBox alignment="CENTER" spacing="15" style="-fx-padding: 30 0 0 0; -fx-cursor: default;">
-                <Label text="Select a role from the menu bar above to start a new session" 
+                <Label text="Select a role from the menu bar above or the cards below to start a new session" 
                        style="-fx-text-fill: #95a5a6; -fx-cursor: default;">
                     <font><Font size="14"/></font>
                 </Label>
