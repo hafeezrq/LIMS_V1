@@ -37,6 +37,9 @@ public class LabDashboardController {
     private Label roleLabel;
 
     @FXML
+    private ComboBox<String> dashboardSwitcher;
+
+    @FXML
     private Label pendingCountLabel;
 
     @FXML
@@ -96,6 +99,18 @@ public class LabDashboardController {
                                 applyBranding();
                             });
                             stage.setOnHidden(e -> stopAutoRefresh());
+                        }
+                    });
+                }
+            });
+        }
+
+        if (dashboardSwitcher != null) {
+            dashboardSwitcher.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != null) {
+                    newScene.windowProperty().addListener((obs2, oldWindow, newWindow) -> {
+                        if (newWindow instanceof Stage stage) {
+                            dashboardSwitchService.setupDashboardSwitcher(dashboardSwitcher, DashboardType.LAB, stage);
                         }
                     });
                 }
@@ -192,6 +207,18 @@ public class LabDashboardController {
     @FXML
     private void handleSwitchUser() {
         navigator.switchUser((Stage) welcomeLabel.getScene().getWindow());
+    }
+
+    @FXML
+    private void handleDashboardSwitch() {
+        String selected = dashboardSwitcher.getValue();
+        if (selected == null || selected.isEmpty() || selected.equals(DashboardType.LAB.getDisplayName())) {
+            return;
+        }
+
+        stopAutoRefresh();
+        Stage stage = (Stage) welcomeLabel.getScene().getWindow();
+        dashboardSwitchService.switchToDashboard(selected, stage);
     }
 
     @FXML

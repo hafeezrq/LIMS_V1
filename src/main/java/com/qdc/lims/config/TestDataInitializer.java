@@ -3,6 +3,7 @@ package com.qdc.lims.config;
 import com.qdc.lims.entity.*;
 import com.qdc.lims.repository.*;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.util.Random;
  * Runs after DataSeeder (which seeds Patients, Doctors, Tests).
  */
 @Component
+@Profile({ "dev", "test" })
 @Order(2) // Run after DataSeeder
 public class TestDataInitializer implements CommandLineRunner {
 

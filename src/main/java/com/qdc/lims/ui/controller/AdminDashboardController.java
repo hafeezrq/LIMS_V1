@@ -101,7 +101,7 @@ public class AdminDashboardController {
                     newScene.windowProperty().addListener((obs2, oldWindow, newWindow) -> {
                         if (newWindow instanceof Stage stage) {
                             // 1. Calculate default dashboard for this SPECIFIC window
-                            DashboardType current = dashboardSwitchService.getDefaultDashboard(stage);
+                            DashboardType current = DashboardType.ADMIN;
                             // 2. Pass the stage to the setup method
                             dashboardSwitchService.setupDashboardSwitcher(dashboardSwitcher, current, stage);
                             brandingService.tagStage(stage, DashboardType.ADMIN.getWindowTitle());

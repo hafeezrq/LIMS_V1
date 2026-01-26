@@ -1,6 +1,14 @@
 /* QDC LIMS - Common Styles */
 
 /* ========== Button Hover Effects ========== */
+.admin-action-button {
+  -fx-cursor: hand;
+}
+
+.admin-action-button:hover {
+  -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.25), 8, 0, 0, 2);
+  -fx-translate-y: -1;
+}
 
 /* Green buttons (Primary actions like Register, Create, Save) */
 .btn-success {

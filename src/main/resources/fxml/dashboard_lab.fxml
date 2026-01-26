@@ -16,6 +16,10 @@
                 <Label text="Lab Dashboard" style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Label fx:id="userLabel" style="-fx-text-fill: rgba(255,255,255,0.8); -fx-font-size: 12;"/>
+                <ComboBox fx:id="dashboardSwitcher" promptText="Switch Dashboard"
+                          style="-fx-background-color: white; -fx-font-size: 11;"
+                          prefWidth="140"
+                          onAction="#handleDashboardSwitch"/>
                 <Button text="Logout" onAction="#handleLogout"
                         style="-fx-background-color: #c0392b; -fx-text-fill: white; -fx-font-size: 11; -fx-padding: 5 12; -fx-background-radius: 4; -fx-cursor: hand;"/>
             </HBox>

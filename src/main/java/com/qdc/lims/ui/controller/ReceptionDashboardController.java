@@ -193,7 +193,7 @@ public class ReceptionDashboardController {
 
                             // 2. Setup the Dashboard Switcher using the Stage (Fixes the "Method Not
                             // Applicable" error)
-                            DashboardType current = dashboardSwitchService.getDefaultDashboard(stage);
+                            DashboardType current = DashboardType.RECEPTION;
                             dashboardSwitchService.setupDashboardSwitcher(dashboardSwitcher, current, stage);
                             brandingService.tagStage(stage, DashboardType.RECEPTION.getWindowTitle());
 

@@ -15,7 +15,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,13 +51,19 @@ public class UserManagementController {
     private TextField fullNameField;
 
     @FXML
-    private CheckBox adminCheckBox;
+    private RadioButton adminRadio;
 
     @FXML
-    private CheckBox receptionCheckBox;
+    private RadioButton receptionRadio;
 
     @FXML
-    private CheckBox labCheckBox;
+    private RadioButton labRadio;
+
+    @FXML
+    private RadioButton staffRadio;
+
+    @FXML
+    private ToggleGroup roleToggleGroup;
 
     @FXML
     private CheckBox activeCheckBox;
@@ -168,19 +173,27 @@ public class UserManagementController {
         }
 
         // Build roles FIRST - need to ensure we have role entities
-        List<Role> selectedRoles = new ArrayList<>();
-        if (adminCheckBox.isSelected()) {
-            roleRepository.findByName("ROLE_ADMIN").ifPresent(selectedRoles::add);
-        }
-        if (receptionCheckBox.isSelected()) {
-            roleRepository.findByName("ROLE_RECEPTION").ifPresent(selectedRoles::add);
-        }
-        if (labCheckBox.isSelected()) {
-            roleRepository.findByName("ROLE_LAB").ifPresent(selectedRoles::add);
+        Role selectedRole = null;
+        String missingRoleMessage = null;
+        if (adminRadio.isSelected()) {
+            selectedRole = roleRepository.findByName("ROLE_ADMIN").orElse(null);
+            missingRoleMessage = "Administrator role is not available. Please refresh roles or restart the app.";
+        } else if (staffRadio.isSelected()) {
+            selectedRole = roleRepository.findByName("ROLE_STAFF").orElse(null);
+            missingRoleMessage = "Staff role is not available. Please refresh roles or restart the app.";
+        } else if (receptionRadio.isSelected()) {
+            selectedRole = roleRepository.findByName("ROLE_RECEPTION").orElse(null);
+            missingRoleMessage = "Reception role is not available. Please refresh roles or restart the app.";
+        } else if (labRadio.isSelected()) {
+            selectedRole = roleRepository.findByName("ROLE_LAB").orElse(null);
+            missingRoleMessage = "Lab role is not available. Please refresh roles or restart the app.";
+        } else {
+            showError("Please select a role");
+            return;
         }
 
-        if (selectedRoles.isEmpty()) {
-            showError("Please select at least one role");
+        if (selectedRole == null) {
+            showError(missingRoleMessage);
             return;
         }
 
@@ -196,7 +209,7 @@ public class UserManagementController {
 
             user.setFullName(fullName);
             user.setActive(activeCheckBox.isSelected());
-            user.setRoles(new HashSet<>(selectedRoles));
+            user.setRoles(new HashSet<>(List.of(selectedRole)));
 
             if (editingUserId == null || !password.isBlank()) {
                 user.setPassword(password);
@@ -235,9 +248,10 @@ public class UserManagementController {
         fullNameField.setText(selectedUser.getFullName());
 
         // Check which roles the user has
-        adminCheckBox.setSelected(selectedUser.hasRole("ROLE_ADMIN"));
-        receptionCheckBox.setSelected(selectedUser.hasRole("ROLE_RECEPTION"));
-        labCheckBox.setSelected(selectedUser.hasRole("ROLE_LAB"));
+        adminRadio.setSelected(selectedUser.hasRole("ROLE_ADMIN"));
+        staffRadio.setSelected(selectedUser.hasRole("ROLE_STAFF"));
+        receptionRadio.setSelected(selectedUser.hasRole("ROLE_RECEPTION"));
+        labRadio.setSelected(selectedUser.hasRole("ROLE_LAB"));
 
         activeCheckBox.setSelected(selectedUser.isActive());
 
@@ -285,9 +299,9 @@ public class UserManagementController {
         usernameField.setDisable(false);
         passwordField.clear();
         fullNameField.clear();
-        adminCheckBox.setSelected(false);
-        receptionCheckBox.setSelected(false);
-        labCheckBox.setSelected(false);
+        if (roleToggleGroup != null) {
+            roleToggleGroup.selectToggle(null);
+        }
         activeCheckBox.setSelected(true);
         editingUserId = null;
         messageLabel.setText("");

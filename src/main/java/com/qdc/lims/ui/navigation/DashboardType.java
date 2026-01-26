@@ -6,8 +6,9 @@ package com.qdc.lims.ui.navigation;
  */
 public enum DashboardType {
     ADMIN("Admin Dashboard", "/fxml/dashboard_admin.fxml", "Admin Dashboard", "ROLE_ADMIN"),
-    RECEPTION("Reception Dashboard", "/fxml/dashboard_reception.fxml", "Reception Dashboard", "ROLE_RECEPTION"),
-    LAB("Lab Dashboard", "/fxml/dashboard_lab.fxml", "Lab Dashboard", "ROLE_LAB", "ROLE_PATHOLOGIST");
+    RECEPTION("Reception Dashboard", "/fxml/dashboard_reception.fxml", "Reception Dashboard", "ROLE_RECEPTION",
+            "ROLE_STAFF"),
+    LAB("Lab Dashboard", "/fxml/dashboard_lab.fxml", "Lab Dashboard", "ROLE_LAB", "ROLE_PATHOLOGIST", "ROLE_STAFF");
 
     private final String displayName;
     private final String fxmlPath;

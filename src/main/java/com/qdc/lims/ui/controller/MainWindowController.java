@@ -2,11 +2,15 @@ package com.qdc.lims.ui.controller;
 
 import com.qdc.lims.ui.SessionManager;
 import com.qdc.lims.ui.navigation.DashboardType;
+import com.qdc.lims.entity.Role;
 import com.qdc.lims.entity.User;
 import com.qdc.lims.service.AuthService;
 import com.qdc.lims.service.BrandingService;
 import com.qdc.lims.service.ConfigService;
 import com.qdc.lims.service.PasswordPolicyService;
+import com.qdc.lims.service.UserService;
+import com.qdc.lims.repository.RoleRepository;
+import com.qdc.lims.repository.UserRepository;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller for the main application window with tabbed interface.
@@ -54,6 +59,9 @@ public class MainWindowController {
     private final BrandingService brandingService;
     private final ConfigService configService;
     private final PasswordPolicyService passwordPolicyService;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @FXML
     private BorderPane mainContainer;
@@ -120,12 +128,18 @@ public class MainWindowController {
             AuthService authService,
             BrandingService brandingService,
             ConfigService configService,
-            PasswordPolicyService passwordPolicyService) {
+            PasswordPolicyService passwordPolicyService,
+            UserService userService,
+            UserRepository userRepository,
+            RoleRepository roleRepository) {
         this.applicationContext = applicationContext;
         this.authService = authService;
         this.brandingService = brandingService;
         this.configService = configService;
         this.passwordPolicyService = passwordPolicyService;
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     @FXML
@@ -218,7 +232,10 @@ public class MainWindowController {
                     brandingService.tagStage(stage, brandingService.getApplicationName());
                     if (!firstRunPromptShown) {
                         firstRunPromptShown = true;
-                        Platform.runLater(() -> handleFirstRun(stage));
+                        Platform.runLater(() -> {
+                            ensureAdminAccount(stage);
+                            handleFirstRun(stage);
+                        });
                     }
                 }
             });
@@ -250,6 +267,160 @@ public class MainWindowController {
             reminder.setContentText("You can continue, but branding and reports may be missing lab information.");
             reminder.showAndWait();
         }
+    }
+
+    private void ensureAdminAccount(Stage owner) {
+        if (userRepository.count() > 0) {
+            return;
+        }
+
+        Alert intro = new Alert(Alert.AlertType.INFORMATION);
+        intro.setTitle("First-Time Setup");
+        intro.setHeaderText("Create Administrator Account");
+        intro.setContentText("No users exist yet. Please create the administrator account to continue.");
+        intro.showAndWait();
+
+        boolean created = showAdminSetupDialog(owner);
+        if (created) {
+            Alert success = new Alert(Alert.AlertType.INFORMATION);
+            success.setTitle("Administrator Created");
+            success.setHeaderText("Admin account created");
+            success.setContentText("Please log in with the new admin account to continue setup.");
+            success.showAndWait();
+        } else {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("Administrator Required");
+            warning.setHeaderText("Setup incomplete");
+            warning.setContentText("You must create an administrator account before using the system.");
+            warning.showAndWait();
+        }
+    }
+
+    private boolean showAdminSetupDialog(Stage owner) {
+        Dialog<User> dialog = new Dialog<>();
+        dialog.setTitle("Create Administrator");
+        dialog.setHeaderText("Set up the administrator account");
+        dialog.initOwner(owner);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("admin");
+        TextField fullNameField = new TextField();
+        fullNameField.setPromptText("Full name");
+        TextField emailField = new TextField();
+        emailField.setPromptText("Email (optional)");
+
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+        PasswordField confirmField = new PasswordField();
+        confirmField.setPromptText("Confirm password");
+
+        Label policyHint = new Label(passwordPolicyService.getPolicyHint());
+        policyHint.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11;");
+
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #e74c3c;");
+
+        TextArea rolesInfo = new TextArea(buildRolesSummary());
+        rolesInfo.setEditable(false);
+        rolesInfo.setWrapText(true);
+        rolesInfo.setPrefRowCount(6);
+
+        VBox content = new VBox(10,
+                new VBox(5, new Label("Username:"), usernameField),
+                new VBox(5, new Label("Full Name:"), fullNameField),
+                new VBox(5, new Label("Email:"), emailField),
+                new VBox(5, new Label("Password:"), passwordField),
+                new VBox(5, new Label("Confirm Password:"), confirmField),
+                policyHint,
+                new Label("Roles and privileges:"),
+                rolesInfo,
+                errorLabel);
+        content.setPadding(new Insets(20));
+        dialog.getDialogPane().setContent(content);
+
+        ButtonType createButtonType = new ButtonType("Create Admin", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
+
+        Button createButton = (Button) dialog.getDialogPane().lookupButton(createButtonType);
+        createButton.setDisable(true);
+
+        Runnable validateReady = () -> {
+            boolean ready = !usernameField.getText().trim().isEmpty()
+                    && !fullNameField.getText().trim().isEmpty()
+                    && !passwordField.getText().isEmpty()
+                    && !confirmField.getText().isEmpty();
+            createButton.setDisable(!ready);
+        };
+
+        usernameField.textProperty().addListener((obs, old, val) -> validateReady.run());
+        fullNameField.textProperty().addListener((obs, old, val) -> validateReady.run());
+        passwordField.textProperty().addListener((obs, old, val) -> validateReady.run());
+        confirmField.textProperty().addListener((obs, old, val) -> validateReady.run());
+
+        createButton.addEventFilter(ActionEvent.ACTION, event -> {
+            errorLabel.setText("");
+            String username = usernameField.getText().trim();
+            String fullName = fullNameField.getText().trim();
+            String email = emailField.getText().trim();
+            String password = passwordField.getText();
+            String confirm = confirmField.getText();
+
+            if (!password.equals(confirm)) {
+                errorLabel.setText("Passwords do not match.");
+                event.consume();
+                return;
+            }
+
+            if (userRepository.findByUsername(username).isPresent()) {
+                errorLabel.setText("Username already exists.");
+                event.consume();
+                return;
+            }
+
+            Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElse(null);
+            if (adminRole == null) {
+                errorLabel.setText("Admin role is missing. Please restart the app.");
+                event.consume();
+                return;
+            }
+
+            try {
+                User admin = new User();
+                admin.setUsername(username);
+                admin.setFullName(fullName);
+                if (!email.isEmpty()) {
+                    admin.setEmail(email);
+                }
+                admin.setPassword(password);
+                admin.getRoles().add(adminRole);
+                userService.createUser(admin);
+                dialog.setResult(admin);
+                dialog.close();
+            } catch (RuntimeException ex) {
+                errorLabel.setText(ex.getMessage());
+                event.consume();
+            }
+        });
+
+        dialog.setResultConverter(button -> button == createButtonType ? dialog.getResult() : null);
+        return dialog.showAndWait().isPresent();
+    }
+
+    private String buildRolesSummary() {
+        List<Role> roles = roleRepository.findAll();
+        if (roles.isEmpty()) {
+            return "Roles have not been initialized yet.";
+        }
+
+        return roles.stream()
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                .map(role -> {
+                    String name = role.getName().replace("ROLE_", "");
+                    String desc = role.getDescription() != null ? role.getDescription() : "No description";
+                    return name + ": " + desc;
+                })
+                .collect(Collectors.joining("\n"));
     }
 
     private void openFirstRunSetupDialog(Stage owner) {
@@ -396,6 +567,20 @@ public class MainWindowController {
             }
         }
 
+        Tab activeTab = sessionTabs.getSelectionModel().getSelectedItem();
+        if (activeTab != null && targetRole != DashboardType.ADMIN) {
+            SessionInfo activeSession = tabSessions.get(activeTab);
+            if (activeSession != null
+                    && activeSession.dashboardType != targetRole
+                    && !isAdminUser(activeSession.user)
+                    && userHasAccessToDashboard(activeSession.user, targetRole)) {
+                switchSessionTabView(activeTab, activeSession.user, targetRole);
+                setStatus("Switched to " + targetRole.getDisplayName() + " view");
+                updateButtonStates();
+                return;
+            }
+        }
+
         System.out.println("DEBUG openLoginDialog: Showing login dialog for " + targetRole);
         // Normal login flow
         Dialog<User> loginDialog = createLoginDialog(targetRole);
@@ -424,6 +609,50 @@ public class MainWindowController {
             }
         }
         return null;
+    }
+
+    private void switchSessionTabView(Tab tab, User user, DashboardType newDashboard) {
+        try {
+            Stage stage = (Stage) mainContainer.getScene().getWindow();
+            SessionManager.login(stage, user);
+            SessionManager.setActiveStage(stage);
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(newDashboard.getFxmlPath()));
+            loader.setControllerFactory(applicationContext::getBean);
+            Parent dashboardContent = loader.load();
+
+            tab.setContent(dashboardContent);
+
+            String roleIcon = switch (newDashboard) {
+                case ADMIN -> "⚙️";
+                case LAB -> "🔬";
+                case RECEPTION -> "🏥";
+            };
+
+            boolean isAdmin = isAdminUser(user);
+            String tabTitle;
+            String tooltipText;
+
+            if (isAdmin) {
+                tabTitle = roleIcon + " " + user.getUsername() + " ("
+                        + newDashboard.getDisplayName().replace(" Dashboard", "") + ")";
+                tooltipText = user.getFullName() + "\nAdmin viewing: " + newDashboard.getDisplayName()
+                        + "\nClick × to logout";
+            } else {
+                tabTitle = roleIcon + " " + user.getUsername();
+                tooltipText = user.getFullName() + "\n" + newDashboard.getDisplayName() + "\nClick × to logout";
+            }
+
+            tab.setText(tabTitle);
+            tab.setTooltip(new Tooltip(tooltipText));
+
+            tabSessions.put(tab, new SessionInfo(user, newDashboard));
+            sessionTabs.getSelectionModel().select(tab);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("Error", "Failed to switch dashboard view: " + e.getMessage());
+        }
     }
 
     /**

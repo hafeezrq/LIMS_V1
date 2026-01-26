@@ -4,6 +4,7 @@ import com.qdc.lims.entity.*;
 import com.qdc.lims.repository.*;
 import com.qdc.lims.service.PatientService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
  * exist.
  */
 @Component
+@Profile({ "dev", "test" })
 public class DataSeeder implements CommandLineRunner {
 
     private final InventoryItemRepository inventoryRepo;

@@ -5,9 +5,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" 
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.qdc.lims.ui.controller.AdminDashboardController"
-            fx:id="mainContainer">
+            fx:id="mainContainer"
+            stylesheets="@/static/styles.css">
     
     <!-- Top Menu Bar -->
     <top>
@@ -90,7 +91,8 @@
                         <Label text="👥 User Management" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #3498db;"/>
                         <Label text="Manage system users," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="roles &amp; permissions" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="Manage Users" onAction="#handleUserManagement" 
+                        <Button text="Manage Users" onAction="#handleUserManagement"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                     
@@ -99,7 +101,8 @@
                         <Label text="🩺 Doctor Management" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
                         <Label text="Manage doctors," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="commissions &amp; payments" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="Doctor Panel" onAction="#handleDoctorPanel" 
+                        <Button text="Doctor Panel" onAction="#handleDoctorPanel"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                     
@@ -108,7 +111,8 @@
                         <Label text="📦 Inventory" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #9b59b6;"/>
                         <Label text="Stock management," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="suppliers &amp; purchases" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="View Inventory" onAction="#handleViewStock" 
+                        <Button text="View Inventory" onAction="#handleViewStock"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                     
@@ -118,7 +122,8 @@
                         <Label text="🧪 Test Configuration" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #e67e22;"/>
                         <Label text="Test definitions," wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="recipes &amp; ranges" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="Configure Tests" onAction="#handleTestDefinitions" 
+                        <Button text="Configure Tests" onAction="#handleTestDefinitions"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                     
@@ -127,7 +132,8 @@
                         <Label text="💰 Finance &amp; Reports" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
                         <Label text="Revenue, payments" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="&amp; financial queries" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="View Reports" onAction="#handleRevenueReports" 
+                        <Button text="View Reports" onAction="#handleRevenueReports"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                     
@@ -136,7 +142,8 @@
                         <Label text="⚙️ System Settings" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #34495e;"/>
                         <Label text="Backup, database" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
                         <Label text="&amp; configuration" wrapText="true" textAlignment="CENTER" style="-fx-text-fill: #7f8c8d; -fx-font-size: 12;"/>
-                        <Button text="System Config" onAction="#handleSystemConfig" 
+                        <Button text="System Config" onAction="#handleSystemConfig"
+                                styleClass="admin-action-button"
                                 style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-padding: 8 20; -fx-background-radius: 5;"/>
                     </VBox>
                 </GridPane>
